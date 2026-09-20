@@ -16,8 +16,8 @@ public class ScriptUtils {
 			throw new RuntimeException(String.format("脚本功能对象不能作为值"));
 		}
 		
-		if (objValue instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-			return ScriptObjectMirrorUtils.getJavaObject((jdk.nashorn.api.scripting.ScriptObjectMirror) objValue);
+		if (objValue instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+			return ScriptObjectMirrorUtils.getJavaObject((org.openjdk.nashorn.api.scripting.ScriptObjectMirror) objValue);
 		}
 		
 		if(objValue instanceof IScriptObject) {

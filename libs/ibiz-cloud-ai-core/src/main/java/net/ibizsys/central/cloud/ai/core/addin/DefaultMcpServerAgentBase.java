@@ -281,7 +281,7 @@ public abstract class DefaultMcpServerAgentBase extends McpServerAgentBase {
 			if(StringUtils.hasLength(strAppContextData)) {
 				headers.put(IHttpMcpServerTransportAgent.HEADER_APPCONTEXT, strAppContextData);
 			}
-			CallToolRequest callToolRequest = new CallToolRequest(strToolName, map, headers);
+			CallToolRequest callToolRequest = new CallToolRequest(strToolName, map, null, headers);
 			CallToolResult callToolResult  = Mono.defer(() -> {
 				if(mcpAsyncClient.isInitialized()) {
 					return mcpAsyncClient.callTool(callToolRequest).doOnSubscribe(sub -> log.info("开始调用工具")).onErrorResume(ex -> {

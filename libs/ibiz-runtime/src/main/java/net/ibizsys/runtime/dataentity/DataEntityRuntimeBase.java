@@ -4816,13 +4816,14 @@ public abstract class DataEntityRuntimeBase extends DataEntityUtilRuntimeBase im
 						}
 					}
 				}
-			}
-			else {
-				if(!this.getKeyPSDEField().isPhisicalDEField()) {
-					Object objKeyValue = this.getFieldValue(iEntityBase, this.getKeyPSDEField());
-					if (!ObjectUtils.isEmpty(objKeyValue)) {
-						parseUnionKeyToEntity(iEntityBase, objKeyValue);
-					}
+				}
+				else {
+					if(!this.getKeyPSDEField().isPhisicalDEField()
+							&& !ObjectUtils.isEmpty(this.getUnionKeyValuePSDEFields())) {
+						Object objKeyValue = this.getFieldValue(iEntityBase, this.getKeyPSDEField());
+						if (!ObjectUtils.isEmpty(objKeyValue)) {
+							parseUnionKeyToEntity(iEntityBase, objKeyValue);
+						}
 				}
 			}
 		}

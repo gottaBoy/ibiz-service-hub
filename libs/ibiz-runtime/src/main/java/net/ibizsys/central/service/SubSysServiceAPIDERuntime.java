@@ -534,8 +534,8 @@ public class SubSysServiceAPIDERuntime extends ModelRuntimeBase implements ISubS
 			}
 			else {
 				Object objParam = this.getSubSysServiceAPIRuntimeContext().createMethodParamScriptObject();
-				if (objParam instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-					jdk.nashorn.api.scripting.ScriptObjectMirror scriptObjectMirror = (jdk.nashorn.api.scripting.ScriptObjectMirror)objParam;
+				if (objParam instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+					org.openjdk.nashorn.api.scripting.ScriptObjectMirror scriptObjectMirror = (org.openjdk.nashorn.api.scripting.ScriptObjectMirror)objParam;
 					scriptObjectMirror.put("uri", strRequestPath);
 					if(objData != null) {
 						scriptObjectMirror.put("body", this.getSystemRuntime().createScriptObject(objData));
@@ -546,8 +546,8 @@ public class SubSysServiceAPIDERuntime extends ModelRuntimeBase implements ISubS
 					}
 					
 					Object obj = scriptObjectMirror.get("param");
-					if(obj instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-						jdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (jdk.nashorn.api.scripting.ScriptObjectMirror)obj;
+					if(obj instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+						org.openjdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (org.openjdk.nashorn.api.scripting.ScriptObjectMirror)obj;
 						if(uriParams != null) {
 							for(java.util.Map.Entry<String, ?> entry : uriParams.entrySet()) {
 								//转小写
@@ -557,8 +557,8 @@ public class SubSysServiceAPIDERuntime extends ModelRuntimeBase implements ISubS
 					}
 					
 					obj = scriptObjectMirror.get("header");
-					if(obj instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-						jdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (jdk.nashorn.api.scripting.ScriptObjectMirror)obj;
+					if(obj instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+						org.openjdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (org.openjdk.nashorn.api.scripting.ScriptObjectMirror)obj;
 						if(headers != null) {
 							for(java.util.Map.Entry<String, ?> entry : headers.entrySet()) {
 								//原始
@@ -568,8 +568,8 @@ public class SubSysServiceAPIDERuntime extends ModelRuntimeBase implements ISubS
 					}
 					
 					obj = scriptObjectMirror.get("query");
-					if(obj instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-						jdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (jdk.nashorn.api.scripting.ScriptObjectMirror)obj;
+					if(obj instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+						org.openjdk.nashorn.api.scripting.ScriptObjectMirror scriptObject = (org.openjdk.nashorn.api.scripting.ScriptObjectMirror)obj;
 						if(queries != null) {
 							for(java.util.Map.Entry<String, ?> entry : queries.entrySet()) {
 								//原始

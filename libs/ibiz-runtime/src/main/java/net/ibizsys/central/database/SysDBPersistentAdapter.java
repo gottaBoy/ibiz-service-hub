@@ -1962,34 +1962,35 @@ public class SysDBPersistentAdapter extends SystemPersistentAdapterBase implemen
 	}
 
 	protected void fillKeyParamsMap(IDataEntityRuntime iDataEntityRuntime,Object key, Map map) throws Exception {
-		if(!iDataEntityRuntime.getKeyPSDEField().isPhisicalDEField()) {
-			// 1. 获取分隔符
+		IPSDEField keyPSDEField = iDataEntityRuntime.getKeyPSDEField();
+		List<IPSDEField> keyFields = iDataEntityRuntime.getUnionKeyValuePSDEFields();
+
+		// Virtual composite keys are encoded as delimiter-separated values.
+		// A non-physical key marker alone is not enough to classify an entity as
+		// composite; some imported models mark a normal key field that way.
+		if (!keyPSDEField.isPhisicalDEField() && !ObjectUtils.isEmpty(keyFields)) {
 			String delimiter = iDataEntityRuntime.getUnionKeyParam();
 			if (!StringUtils.hasLength(delimiter)) {
 				throw new DataEntityRuntimeException(iDataEntityRuntime, "未定义虚拟主键分隔符");
 			}
 
-			// 2. 拆分键值
 			String[] keySegments = String.valueOf(key).split(delimiter);
-			List<IPSDEField> keyFields = iDataEntityRuntime.getUnionKeyValuePSDEFields();
-
-			// 3. 校验数量一致性
-			if (ObjectUtils.isEmpty(keyFields) || keyFields.size() != keySegments.length) {
+			if (keyFields.size() != keySegments.length) {
 				throw new DataEntityRuntimeException(iDataEntityRuntime, "联合主键属性数量和键值段数量不一致");
 			}
 
-			// 4. 循环赋值
 			for (int i = 0; i < keyFields.size(); i++) {
 				IPSDEField iPSDEField = keyFields.get(i);
-				map.put(iPSDEField.getLowerCaseName(), SqlParam.value( DataTypeUtils.convert(iPSDEField.getStdDataType(), keySegments[i]), true));
+				map.put(iPSDEField.getLowerCaseName(), SqlParam.value(
+						DataTypeUtils.convert(iPSDEField.getStdDataType(), keySegments[i]), true));
 			}
+			return;
 		}
-		else {
-			if (iDataEntityRuntime.getUniTagPSDEField() != null) {
-				map.put(iDataEntityRuntime.getUniTagPSDEField().getLowerCaseName(), SqlParam.value(key, true));
-			} else {
-				map.put(iDataEntityRuntime.getKeyPSDEField().getLowerCaseName(), SqlParam.value(key, true));
-			}
+
+		if (iDataEntityRuntime.getUniTagPSDEField() != null) {
+			map.put(iDataEntityRuntime.getUniTagPSDEField().getLowerCaseName(), SqlParam.value(key, true));
+		} else {
+			map.put(keyPSDEField.getLowerCaseName(), SqlParam.value(key, true));
 		}
 	}
 }

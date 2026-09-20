@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.util.ObjectUtils;
 import org.springframework.util.StringUtils;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 
 import net.ibizsys.central.cloud.core.security.EmployeeContext;
@@ -17,7 +18,9 @@ import net.ibizsys.central.cloud.core.util.domain.V2SystemExtensionScopeType;
 import net.ibizsys.central.plugin.extension.psmodel.util.ExtensionUtils;
 import net.ibizsys.central.plugin.extension.psmodel.util.IExtensionPSModelRTServiceSession;
 import net.ibizsys.central.util.SearchContextDTO;
+import net.ibizsys.model.IPSModelObject;
 import net.ibizsys.model.IPSModelObjectRuntime;
+import net.ibizsys.model.PSModelUtils;
 import net.ibizsys.model.dataentity.IPSDataEntity;
 import net.ibizsys.model.dataentity.logic.IPSDELogic;
 import net.ibizsys.model.dataentity.logic.PSDELogicImpl;
@@ -112,15 +115,193 @@ public class PSDELogicRTService extends net.ibizsys.psmodel.runtime.service.PSDE
 				// 取默认
 				PSDELogic psDELogic = this.doGet(key.split("[@]")[1], tryMode);
 				if (psDELogic != null) {
-					// 重置动态实例
-					psDELogic.set(ExtensionUtils.FIELD_PSDYNAINSTID, ExtensionUtils.DYNAINSTID_PARENT);
-					psDELogic.setPSDELogicId(key);
-					psDELogic.setPSDEId(getParentId(key));
-					return psDELogic;
+					return createDynamicPSDELogicDomain(key, psDELogic);
 				}
 			}
 		}
 		return super.doGet(key, tryMode);
+	}
+
+	@Override
+	protected IPSModelObject getPSModelObject(String key, boolean tryMode) throws Exception {
+		if (!StringUtils.hasLength(key)) {
+			if (tryMode) {
+				return null;
+			}
+			throw new Exception("未指定模型对象标识");
+		}
+
+		// Dynamic extension keys use the instance id before '@' and the
+		// static model tag after it. Resolve the latter from the model tree,
+		// then expose the template with the dynamic id expected by callers.
+		boolean bDynamicKey = key.indexOf("@") != -1;
+		String strModelKey = bDynamicKey ? key.substring(key.indexOf("@") + 1) : key;
+		String strPSDEId = getParentId(strModelKey);
+		IPSDataEntity iPSDataEntity = resolvePSDataEntity(strPSDEId);
+		if (iPSDataEntity != null) {
+			IPSDELogic iPSDELogic = resolvePSDELogic(iPSDataEntity, getSimpleModelTag(strModelKey));
+			if (iPSDELogic != null) {
+				if (bDynamicKey) {
+					return createDynamicPSDELogic(key, iPSDELogic);
+				}
+				return iPSDELogic;
+			}
+		}
+
+		if (tryMode) {
+			return null;
+		}
+		throw new Exception(String.format("无法获取指定模型对象[%1$s]", key));
+	}
+
+	protected IPSDELogic createDynamicPSDELogic(String key, IPSDELogic template) throws Exception {
+		return createDynamicPSDELogic(key, template == null ? null : template.getObjectNode());
+	}
+
+	protected PSDELogic createDynamicPSDELogicDomain(String key, PSDELogic template) {
+		if (template == null) {
+			return null;
+		}
+
+		PSDELogic dynamic = new PSDELogic();
+		template.copyTo(dynamic);
+		dynamic.set(ExtensionUtils.FIELD_PSDYNAINSTID, ExtensionUtils.DYNAINSTID_PARENT);
+		dynamic.setPSDELogicId(key);
+		dynamic.setPSDEId(getParentId(key));
+		return dynamic;
+	}
+
+	protected IPSDELogic createDynamicPSDELogic(String key, ObjectNode templateObjectNode) throws Exception {
+		IPSDataEntity iPSDataEntity = resolvePSDataEntity(getParentId(key));
+		if (iPSDataEntity == null || templateObjectNode == null) {
+			return null;
+		}
+
+		ObjectNode dynamicObjectNode = templateObjectNode.deepCopy();
+		dynamicObjectNode.put("id", key);
+		dynamicObjectNode.put(ExtensionUtils.FIELD_PSDYNAINSTID, ExtensionUtils.DYNAINSTID_PARENT);
+		dynamicObjectNode.put("psdeid", getParentId(key));
+		return this.getPSSystemService().createAndInitPSModelObject(
+				(IPSModelObjectRuntime) iPSDataEntity, IPSDELogic.class, dynamicObjectNode);
+	}
+
+	/**
+	 * Resolve one logic model from lightweight entity references.
+	 * Calling getAllPSDELogics() here instantiates every logic under the entity.
+	 */
+	protected IPSDELogic resolvePSDELogic(IPSDataEntity iPSDataEntity, String strLogicTag) throws Exception {
+		if (iPSDataEntity == null || !StringUtils.hasLength(strLogicTag)) {
+			return null;
+		}
+
+		JsonNode value = iPSDataEntity.getObjectNode().get("getAllPSDELogics");
+		if (value != null && value.isArray()) {
+			for (JsonNode item : value) {
+				if (!item.isObject()) {
+					continue;
+				}
+
+				ObjectNode logicNode = (ObjectNode) item;
+				String strModelPath = null;
+				JsonNode modelRefNode = logicNode.get("modelref");
+				if (modelRefNode != null && modelRefNode.asBoolean(false)) {
+					strModelPath = getNodeText(logicNode, "path");
+				}
+				if (!StringUtils.hasLength(strModelPath)) {
+					strModelPath = getNodeText(logicNode, "dynaModelFilePath");
+				}
+
+				if (!isSameModelTag(strLogicTag, getSimpleModelTag(getNodeText(logicNode, "codeName")))
+						&& !isSameModelTag(strLogicTag, getSimpleModelTag(strModelPath))
+						&& !isSameModelTag(strLogicTag, getSimpleModelTag(getNodeText(logicNode, "id")))) {
+					continue;
+				}
+
+				if (StringUtils.hasLength(strModelPath)) {
+					return this.getPSSystemService().getPSModelObject(IPSDELogic.class, strModelPath);
+				}
+
+				return this.getPSSystemService().createAndInitPSModelObject(
+						(IPSModelObjectRuntime) iPSDataEntity, IPSDELogic.class, logicNode);
+			}
+		}
+
+		// Some model variants omit the child reference from the entity JSON.
+		// Derive the conventional logic path without materializing all siblings.
+		String strEntityModelPath = iPSDataEntity.getDynaModelFilePath();
+		if (StringUtils.hasLength(strEntityModelPath)) {
+			int nPos = strEntityModelPath.lastIndexOf('.');
+			if (nPos > 0) {
+				String strModelPath = String.format("%1$s/PSDELOGICS/%2$s.json",
+						strEntityModelPath.substring(0, nPos), strLogicTag);
+				try {
+					return this.getPSSystemService().getPSModelObject(IPSDELogic.class, strModelPath);
+				} catch (Exception ex) {
+					log.debug(String.format("按约定路径加载实体逻辑[%1$s]失败", strModelPath), ex);
+				}
+			}
+		}
+		return null;
+	}
+
+	protected String getNodeText(ObjectNode objectNode, String strFieldName) {
+		JsonNode value = objectNode.get(strFieldName);
+		return value == null || value.isNull() ? null : value.asText();
+	}
+
+	protected IPSDataEntity resolvePSDataEntity(String strPSDEId) throws Exception {
+		IPSDataEntity iPSDataEntity = this.getPSSystemService().getPSDataEntity(strPSDEId, true);
+		if (iPSDataEntity != null) {
+			return iPSDataEntity;
+		}
+
+		// The model service cache also indexes entities by their display name.
+		int nPos = strPSDEId == null ? -1 : strPSDEId.lastIndexOf('.');
+		if (nPos != -1 && nPos < strPSDEId.length() - 1) {
+			iPSDataEntity = this.getPSSystemService().getPSDataEntity(strPSDEId.substring(nPos + 1), true);
+			if (iPSDataEntity != null) {
+				return iPSDataEntity;
+			}
+		}
+
+		// Some model loaders expose the entity only through the system model list.
+		// Resolve that list by the canonical module.codeName tag.
+		List<IPSDataEntity> psDataEntityList = this.getPSSystemService().getPSSystem().getAllPSDataEntities();
+		if (psDataEntityList != null) {
+			for (IPSDataEntity item : psDataEntityList) {
+				String strModelTag = PSModelUtils.calcUniqueTag(item.getPSSystemModule(), item.getCodeName());
+				if (isSameModelTag(strPSDEId, strModelTag)) {
+					return item;
+				}
+			}
+		}
+		return null;
+	}
+
+	protected String getSimpleModelTag(String value) {
+		if (!StringUtils.hasLength(value)) {
+			return null;
+		}
+
+		String strTag = value;
+		if (strTag.toLowerCase().endsWith(".json")) {
+			strTag = strTag.substring(0, strTag.length() - 5);
+		}
+
+		int nPos = Math.max(strTag.lastIndexOf('/'), strTag.lastIndexOf('\\'));
+		if (nPos != -1) {
+			strTag = strTag.substring(nPos + 1);
+		}
+
+		nPos = strTag.lastIndexOf('.');
+		if (nPos != -1) {
+			strTag = strTag.substring(nPos + 1);
+		}
+		return strTag;
+	}
+
+	protected boolean isSameModelTag(String left, String right) {
+		return StringUtils.hasLength(left) && StringUtils.hasLength(right) && left.equalsIgnoreCase(right);
 	}
 
 	@Override

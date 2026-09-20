@@ -324,7 +324,6 @@ public class PSModelServiceImpl extends PSModelServiceImplBase implements IPSDyn
 							iPSDataEntity.getMinorPSDERs();
 							iPSDataEntity.getMajorPSDERs();
 							iPSDataEntity.getAllPSDEActions();
-							iPSDataEntity.getAllPSDELogics();
 						}
 					}
 				}
@@ -460,7 +459,6 @@ public class PSModelServiceImpl extends PSModelServiceImplBase implements IPSDyn
 				iPSDataEntity.getMinorPSDERs();
 				iPSDataEntity.getMajorPSDERs();
 				iPSDataEntity.getAllPSDEActions();
-				iPSDataEntity.getAllPSDELogics();
 				this.psDataEntityMap.put(strName , iPSDataEntity);
 			}
 		}
@@ -1613,16 +1611,7 @@ public class PSModelServiceImpl extends PSModelServiceImplBase implements IPSDyn
 				) {
 			IPSDataEntity iPSDataEntity = (IPSDataEntity)this.getPSModelObjectByDslId(PSModels.PSDATAENTITY, PSModelUtils.getParentId(strPSModelDslId), false);
 			if(PSModels.PSDELOGIC.equals(strPSModelType)) {
-				List<IPSDELogic> psDELogicList = iPSDataEntity.getAllPSDELogics();
-				if(!ObjectUtils.isEmpty(psDELogicList)) {
-					for(IPSDELogic iPSDELogic : psDELogicList) {
-						String strDslId = iPSDELogic.getDslId();
-						if(strPSModelDslId.equalsIgnoreCase(strDslId)) {
-							return iPSDELogic;
-						}
-					}
-				}
-				return null;
+				return getPSDELogicByDslId(iPSDataEntity, strPSModelDslId);
 			}
 			if(PSModels.PSDEFIELD.equals(strPSModelType)) {
 				List<IPSDEField> psDEFieldList = iPSDataEntity.getAllPSDEFields();
@@ -1736,6 +1725,68 @@ public class PSModelServiceImpl extends PSModelServiceImplBase implements IPSDyn
 			
 		}
 		return null;
+	}
+
+	/**
+	 * Resolve a single data-entity logic from its lightweight JSON reference.
+	 * Calling IPSDataEntity#getAllPSDELogics() here materializes every sibling
+	 * logic, which is unnecessarily expensive for model lookups by DSL ID.
+	 */
+	protected IPSDELogic getPSDELogicByDslId(IPSDataEntity iPSDataEntity, String strPSModelDslId) {
+		if(iPSDataEntity == null || !StringUtils.hasLength(strPSModelDslId)) {
+			return null;
+		}
+
+		JsonNode value = iPSDataEntity.getObjectNode().get("getAllPSDELogics");
+		if(value == null || !value.isArray()) {
+			return null;
+		}
+
+		for(JsonNode item : value) {
+			if(!item.isObject()) {
+				continue;
+			}
+
+			ObjectNode logicNode = (ObjectNode)item;
+			String strLogicPath = null;
+			JsonNode modelRefNode = logicNode.get("modelref");
+			if(modelRefNode != null && modelRefNode.asBoolean(false)) {
+				JsonNode pathNode = logicNode.get("path");
+				if(pathNode != null && !pathNode.isNull()) {
+					strLogicPath = pathNode.asText();
+				}
+			}
+			if(!StringUtils.hasLength(strLogicPath)) {
+				JsonNode pathNode = logicNode.get("dynaModelFilePath");
+				if(pathNode != null && !pathNode.isNull()) {
+					strLogicPath = pathNode.asText();
+				}
+			}
+
+			String strLogicDslId = getNodeText(logicNode, "dslId");
+			String strLogicCodeName = getNodeText(logicNode, "codeName");
+			String strLogicId = getNodeText(logicNode, "id");
+			if(!strPSModelDslId.equalsIgnoreCase(strLogicDslId)
+					&& !strPSModelDslId.equalsIgnoreCase(strLogicCodeName)
+					&& !strPSModelDslId.equalsIgnoreCase(strLogicId)
+					&& !strPSModelDslId.equalsIgnoreCase(strLogicPath)
+					&& !strPSModelDslId.endsWith("." + strLogicCodeName)) {
+				continue;
+			}
+
+			if(StringUtils.hasLength(strLogicPath)) {
+				return this.getPSModelObject((IPSModelObjectRuntime)iPSDataEntity, IPSDELogic.class, strLogicPath);
+			}
+
+			return this.createAndInitPSModelObject(
+					(IPSModelObjectRuntime)iPSDataEntity, IPSDELogic.class, logicNode);
+		}
+		return null;
+	}
+
+	protected String getNodeText(ObjectNode objectNode, String strFieldName) {
+		JsonNode value = objectNode.get(strFieldName);
+		return value == null || value.isNull() ? null : value.asText();
 	}
 	
 	

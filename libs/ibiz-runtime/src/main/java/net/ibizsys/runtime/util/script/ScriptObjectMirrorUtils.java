@@ -14,7 +14,7 @@ import java.util.Map.Entry;
 public class ScriptObjectMirrorUtils {
 
 	@SuppressWarnings("restriction")
-	public static Object getJavaObject(jdk.nashorn.api.scripting.ScriptObjectMirror obj) {
+	public static Object getJavaObject(org.openjdk.nashorn.api.scripting.ScriptObjectMirror obj) {
 		String strClassName = obj.getClassName();
 		if("Date".equals(strClassName)) {
 			Double objValue2  = (Double)obj.callMember("getTime");

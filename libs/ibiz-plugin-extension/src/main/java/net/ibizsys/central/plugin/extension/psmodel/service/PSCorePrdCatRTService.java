@@ -237,25 +237,26 @@ public class PSCorePrdCatRTService extends net.ibizsys.psmodel.runtime.service.P
 		String strUrl = String.format("%1$s%2$s", iExtensionPSModelRTServiceSession.getProductMarketServiceUrl(), strPath);
 		IWebClientRep<String> rep;
 		String content = null;
-		try {
-			rep = iExtensionPSModelRTServiceSession.getSystemRuntime().getDefaultWebClient().get(strUrl, uriParams, null, queryParams, String.class, null);
+		rep = null;
+		java.nio.file.Path localConfig = Paths.get(iExtensionPSModelRTServiceSession.getSystemRuntime().getFileFolder(),"market", "catalogs.yml");
+		if (Files.exists(localConfig)) {
+			content = new String(Files.readAllBytes(localConfig), StandardCharsets.UTF_8);
 		}
-		catch (Throwable ex) {
-			boolean bIgnore = false;
-			rep = null;
-			if(ex.getCause() instanceof WebClientResponseException) {
-				WebClientResponseException webClientResponseException = (WebClientResponseException)ex.getCause();
-				if(webClientResponseException.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
-					bIgnore = true;
+		else {
+			try {
+				rep = iExtensionPSModelRTServiceSession.getSystemRuntime().getDefaultWebClient().get(strUrl, uriParams, null, queryParams, String.class, null);
+			}
+			catch (Throwable ex) {
+				boolean bIgnore = false;
+				if(ex.getCause() instanceof WebClientResponseException) {
+					WebClientResponseException webClientResponseException = (WebClientResponseException)ex.getCause();
+					if(webClientResponseException.getStatusCode().value() == HttpStatus.NOT_FOUND.value()) {
+						bIgnore = true;
+					}
 				}
+				if(!bIgnore)
+					throw new Exception(String.format("%1$s - 获取catalogs.yml文件发生异常，%2$s",iExtensionPSModelRTServiceSession.getProductMarketServiceUrl(), ex.getMessage()), ex);
 			}
-
-			java.nio.file.Path localConfig = Paths.get(iExtensionPSModelRTServiceSession.getSystemRuntime().getFileFolder(),"market", "catalogs.yml");
-			if (Files.exists(localConfig)) {
-				content = new String(Files.readAllBytes(localConfig), StandardCharsets.UTF_8);
-			}
-			else if(!bIgnore)
-				throw new Exception(String.format("%1$s - 获取catalogs.yml文件发生异常，%2$s",iExtensionPSModelRTServiceSession.getProductMarketServiceUrl(), ex.getMessage()), ex);
 		}
 
 		if(rep != null) {

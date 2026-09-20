@@ -107,8 +107,8 @@ public class ScriptList implements IScriptList {
 
 		if (objList instanceof List) {
 			srcList = (List) objList;
-		} else if (objList instanceof jdk.nashorn.api.scripting.ScriptObjectMirror) {
-			Object obj = ScriptObjectMirrorUtils.getJavaObject((jdk.nashorn.api.scripting.ScriptObjectMirror) objList);
+		} else if (objList instanceof org.openjdk.nashorn.api.scripting.ScriptObjectMirror) {
+			Object obj = ScriptObjectMirrorUtils.getJavaObject((org.openjdk.nashorn.api.scripting.ScriptObjectMirror) objList);
 			if (obj instanceof List) {
 				srcList = (List) obj;
 			}

@@ -3,6 +3,7 @@ package net.ibizsys.central.plugin.liquibase.spring;
 import java.io.File;
 import java.io.PrintStream;
 import java.nio.file.Paths;
+import java.sql.Connection;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
@@ -22,13 +23,16 @@ import liquibase.change.core.EmptyChange;
 import liquibase.changelog.ChangeSet;
 import liquibase.changelog.DatabaseChangeLog;
 import liquibase.database.Database;
+import liquibase.database.DatabaseFactory;
 import liquibase.database.ObjectQuotingStrategy;
 import liquibase.diff.DiffResult;
 import liquibase.diff.ObjectDifferences;
 import liquibase.diff.compare.CompareControl;
 import liquibase.diff.output.DiffOutputControl;
-import liquibase.integration.commandline.CommandLineUtils;
+import liquibase.database.jvm.JdbcConnection;
 import liquibase.resource.FileSystemResourceAccessor;
+import liquibase.resource.ClassLoaderResourceAccessor;
+import liquibase.resource.CompositeResourceAccessor;
 import liquibase.resource.ResourceAccessor;
 import liquibase.snapshot.DatabaseSnapshot;
 import liquibase.snapshot.SnapshotControl;
@@ -136,7 +140,9 @@ public class LiquibaseTool implements ISysDBSchemeSyncAdapter {
 
 		Map<String, String> changeLogFileMap = new LinkedHashMap<String, String>();
 
-		ResourceAccessor resourceAccessor = new FileSystemResourceAccessor(Paths.get(".").toString());
+		ResourceAccessor resourceAccessor = new CompositeResourceAccessor(
+				new FileSystemResourceAccessor(Paths.get(".").toString()),
+				new ClassLoaderResourceAccessor(Thread.currentThread().getContextClassLoader()));
 
 		// 放入自动化变更文件
 		String strDefaultModelTag = null;
@@ -245,7 +251,7 @@ public class LiquibaseTool implements ISysDBSchemeSyncAdapter {
 				}
 			}
 
-			Database targetDatabase = CommandLineUtils.createDatabaseObject(resourceAccessor, dataSource.getJdbcUrl(), dataSource.getUsername(), dataSource.getPassword(), dataSource.getDriverClassName(), "", "", false, false, null, null, null, null, null, null, null);
+			Database targetDatabase = createDatabaseObject(dataSource);
 
 			try (Liquibase liquibase = new Liquibase(strChangelogFile, resourceAccessor, targetDatabase)) {
 				if(bFirst) {
@@ -616,6 +622,28 @@ public class LiquibaseTool implements ISysDBSchemeSyncAdapter {
 			}
 		}
 
+	}
+
+	/**
+	 * Reuse the application's managed JDBC connection. Liquibase's command-line
+	 * helper loads the driver through its own resource accessor, which cannot
+	 * resolve drivers nested inside a Spring Boot executable JAR.
+	 */
+	protected Database createDatabaseObject(DataSource dataSource) throws Exception {
+		javax.sql.DataSource jdbcDataSource = ServiceHub.getInstance().getDataSource(dataSource.getDataSourceId(), false);
+		Connection connection = jdbcDataSource.getConnection();
+		try {
+			return DatabaseFactory.getInstance().findCorrectDatabaseImplementation(new JdbcConnection(connection));
+		}
+		catch (Exception ex) {
+			try {
+				connection.close();
+			}
+			catch (Exception closeEx) {
+				ex.addSuppressed(closeEx);
+			}
+			throw ex;
+		}
 	}
 
 	public String getStandardName(String strOriginName, IDBDialect iDBDialect, PSModelEnums.DBObjNameCaseMode dbObjNameCaseMode) throws Throwable {
