@@ -40,6 +40,7 @@
 
     <modules>
         <module>ibiz-model</module>
+        <module>ibiz-modeling-core</module>
         <module>ibiz-runtime</module>
         <module>ibiz-model-util</module>
         <module>ibiz-psmodel-core</module>
@@ -140,6 +141,7 @@
 
 	<properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <ibiz.bytecode.release>11</ibiz.bytecode.release>
         <maven.deploy.skip>false</maven.deploy.skip>
         <maven.test.skip>true</maven.test.skip>
         <maven.javadoc.skip>false</maven.javadoc.skip>
@@ -153,6 +155,7 @@
         <xdocreport.version>2.0.3</xdocreport.version>
         <flexmark.version>0.62.2</flexmark.version>
         <jsoup.version>1.17.2</jsoup.version>
+        <groovy.version>3.0.20</groovy.version>
 
     </properties>
 
@@ -357,8 +360,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>1.8</source>
-                    <target>1.8</target>
+                    <release>${ibiz.bytecode.release}</release>
                 </configuration>
             </plugin>
             <plugin>
