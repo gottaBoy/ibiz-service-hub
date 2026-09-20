@@ -10,7 +10,7 @@ spring:
     username: plm
     password: 'plm@2024'
     url: jdbc:mysql://${mysql.host:mysql}:${mysql.port:3306}/plm?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useOldAliasMetadataBehavior=true&serverTimezone=Asia/Shanghai&allowMultiQueries=true&serverTimezone=GMT%2B8&useSSL=false
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     isSyncDBSchema: false
     defaultSchema: plm
     dynamic:
@@ -56,6 +56,5 @@ server:
     enabled: true
     mime-types: application/javascript,text/css,application/json,application/xml,text/html,text/xml,text/plain
     min-response-size: 10240
-
 
 

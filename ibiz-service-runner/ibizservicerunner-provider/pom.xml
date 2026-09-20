@@ -19,6 +19,17 @@
             <artifactId>ibizservicerunner-core</artifactId>
             <version>${ibiz.cloud.version}</version>
         </dependency>
+        <dependency>
+            <groupId>cn.ibizlab.plugin</groupId>
+            <artifactId>ibiz-modeling-core</artifactId>
+            <version>${ibiz.cloud.version}</version>
+        </dependency>
+        <!-- Match ibiz-plugin-liquibase; Boot 2.4 otherwise downgrades this to 3.10.3. -->
+        <dependency>
+            <groupId>org.liquibase</groupId>
+            <artifactId>liquibase-core</artifactId>
+            <version>4.8.0</version>
+        </dependency>
 
         <dependency>
             <groupId>javax.servlet</groupId>

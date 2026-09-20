@@ -6,6 +6,17 @@ deploysystems:
   - gateway
   - ibizservicerunner
 systemsettings:
+  harness:
+    recovery:
+      enabled: ${HARNESS_RECOVERY_ENABLED:false}
+      worker-id: ${HOSTNAME:}
+      poll-interval-ms: 5000
+      batch-size: 100
+      lease-ms: 60000
+      lease-renew-interval-ms: ${HARNESS_RECOVERY_LEASE_RENEW_INTERVAL_MS:20000}
+      max-attempts: 3
+      initial-backoff-ms: 5000
+      max-backoff-ms: 60000
   cloudclientutil:
     serviceurl: lb://ebsx-oldapi
     accesstokenurl: lb://ibizcloud-uaa/v7/login
