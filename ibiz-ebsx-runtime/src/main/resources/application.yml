@@ -16,12 +16,12 @@ springfox:
     enabled: true
 
 logging:
-  level: 
+  level:
     net.ibizsys.central.cloud: debug
     net.ibizsys.central: debug
     net.ibizsys.runtime: debug
 
-    
+
 spring:
   profiles:
     include: sys, ${ibiz.servicehub.initmode}
@@ -47,9 +47,9 @@ spring:
     username: a_lab01_3f9ebc219
     password: '9d@A178@'
     url: jdbc:mysql://${mysql.host:mysql}:${mysql.port:3306}/a_lab01_3f9ebc219?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useOldAliasMetadataBehavior=true&serverTimezone=GMT%2B8&allowMultiQueries=true&useSSL=false
-    driver-class-name: com.mysql.jdbc.Driver
+    driver-class-name: com.mysql.cj.jdbc.Driver
     isSyncDBSchema: false
-    defaultSchema: a_LAB01_3f9ebc219
+    defaultSchema: a_lab01_3f9ebc219
     dynamic:
       druid: #以下是全局默认值，可以全局更改
         filters: stat,wall,log4j2
@@ -76,6 +76,6 @@ spring:
           password: ${spring.datasource.password}
           url: ${spring.datasource.url}
           driver-class-name: ${spring.datasource.driver-class-name}
-      
-       
-       
+
+
+

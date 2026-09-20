@@ -72,6 +72,14 @@
             <version>${jsoup.version}</version>
         </dependency>
 
+        <!-- Nashorn was removed from the JDK after Java 14. Keep the legacy
+             script API available when the project is built or run on Java 17+. -->
+        <dependency>
+            <groupId>org.openjdk.nashorn</groupId>
+            <artifactId>nashorn-core</artifactId>
+            <version>15.6</version>
+        </dependency>
+
 
     </dependencies>
     

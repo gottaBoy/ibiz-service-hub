@@ -6,7 +6,7 @@ rtds:
   url: jdbc:mysql://${mysql.host:mysql}:${mysql.port:3306}/a_lab01_3f9ebc219?autoReconnect=true&useUnicode=true&characterEncoding=UTF-8&useOldAliasMetadataBehavior=true&serverTimezone=GMT%2B8&allowMultiQueries=true&useSSL=false
   username: a_lab01_3f9ebc219
   password: '9d@A178@'
-  driver-class-name: com.mysql.jdbc.Driver
+  driver-class-name: com.mysql.cj.jdbc.Driver
   defaultSchema: a_lab01_3f9ebc219
 zookeeper:
   address: ${zookeeper.host:zoo1}
@@ -141,7 +141,6 @@ ibiz:
         informagent:
           serviceurl: ws://${emqx.host:emqx}:${emqx.port:8083}/mqtt
           topic: portalmq
-
 
 
 

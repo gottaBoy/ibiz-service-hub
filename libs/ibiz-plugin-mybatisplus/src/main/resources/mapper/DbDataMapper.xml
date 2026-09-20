@@ -229,6 +229,11 @@
         </where>
     </select>
 
+    <!-- Custom query SQL used by both the list and paged mapper overloads. -->
+    <select id="queryData" resultType="java.util.Map">
+        ${sql}
+    </select>
+
     <select id="queryGroupData" resultType="java.util.Map">
         select * from (
         SELECT

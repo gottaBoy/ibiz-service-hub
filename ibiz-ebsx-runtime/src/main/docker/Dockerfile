@@ -1,4 +1,4 @@
-FROM image.ibizlab.cn/library/openjdk:8-jre-alpine
+FROM eclipse-temurin:17-jre
 
 ENV TZ=Asia/Shanghai \
     SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
