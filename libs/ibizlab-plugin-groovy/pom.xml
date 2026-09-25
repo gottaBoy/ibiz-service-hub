@@ -27,25 +27,25 @@
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-cloud</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-gateway</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-groovy</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-extension</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         
@@ -64,7 +64,7 @@
 				<artifactId>gmavenplus-plugin</artifactId>
 				<version>1.13.1</version>
 				<configuration>
-					<targetBytecode>17</targetBytecode>
+					<targetBytecode>11</targetBytecode>
 				</configuration>
 				<executions>
 					<execution>

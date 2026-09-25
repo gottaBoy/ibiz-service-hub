@@ -15,7 +15,7 @@
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-cloud-core</artifactId>
 			<scope>provided</scope>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 	</dependencies>
 </project>

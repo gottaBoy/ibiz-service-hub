@@ -4,7 +4,7 @@
     <parent>
         <artifactId>ibiz-service-hub</artifactId>
         <groupId>cn.ibizlab.plugin</groupId>
-        <version>${ibiz.cloud.version}</version>
+        <version>8.1.0.584.1</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
@@ -32,198 +32,198 @@
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-cloud</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-redis</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-mybatisplus-spring-boot-starter</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
          <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-zookeeper</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-poi</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-liquibase</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-elasticsearch</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
        </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-kafka</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-quartz</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-rabbitmq</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-mongodb</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-activemq</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
                 <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-solr</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-python</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibizlab-plugin-groovy</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-eai</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-psmodel-runtime</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-jgit</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
        </dependency>
        	<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-neo4j</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-antvg6</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 
         <dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-neo4j-report</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 
         <dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-extension</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-opml</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-version</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-util</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-ai</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-wechat</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-open</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-calcite</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-autoconfigure</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-docx4j</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-task</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-postgresql</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <!--达梦数据库-->
@@ -242,19 +242,19 @@
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-task</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-test</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-plugin-postgresql</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
     </dependencies>
 

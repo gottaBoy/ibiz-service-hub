@@ -16,37 +16,37 @@
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-cloud-core</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-ai</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-plugin-cloud</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-psmodel-core</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
         
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-psmodel-runtime</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 		
 		<dependency>
 			<groupId>cn.ibizlab.plugin</groupId>
 			<artifactId>ibiz-codegen-template-runtime</artifactId>
-			<version>${ibiz.cloud.version}</version>
+			<version>8.1.0.584.1</version>
 		</dependency>
 		
 		

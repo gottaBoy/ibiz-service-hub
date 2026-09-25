@@ -27,31 +27,31 @@
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-runtime</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
  		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-devops-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 	
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-saas-ebsx</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-model-util</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
        </dependencies> 

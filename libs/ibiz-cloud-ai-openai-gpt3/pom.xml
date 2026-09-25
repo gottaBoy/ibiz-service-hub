@@ -12,7 +12,7 @@
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-ai-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
 		<!-- https://mvnrepository.com/artifact/com.theokanning.openai-gpt3-java/service -->

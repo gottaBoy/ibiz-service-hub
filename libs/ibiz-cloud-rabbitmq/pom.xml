@@ -17,13 +17,13 @@
 		<dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-uaa-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         
 

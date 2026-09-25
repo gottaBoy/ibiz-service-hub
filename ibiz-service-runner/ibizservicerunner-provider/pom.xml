@@ -17,12 +17,12 @@
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibizservicerunner-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-modeling-core</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
         <!-- Match ibiz-plugin-liquibase; Boot 2.4 otherwise downgrades this to 3.10.3. -->
         <dependency>

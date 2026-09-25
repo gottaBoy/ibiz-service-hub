@@ -4,7 +4,7 @@
 
     <artifactId>ibiz-service-hub</artifactId>
     <groupId>cn.ibizlab.plugin</groupId>
-    <version>${ibiz.cloud.version}</version>
+    <version>8.1.0.584.1</version>
     <name>iBiz Service Hub</name>
     <packaging>pom</packaging>
     <description>iBiz Service Hub</description>

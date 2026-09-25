@@ -93,7 +93,7 @@
         <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-runtime</artifactId>
-            <version>${ibiz.cloud.version}</version>
+            <version>8.1.0.584.1</version>
         </dependency>
 		
 <!-- 		<dependency> -->
