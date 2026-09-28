@@ -200,7 +200,7 @@ git_commit() {
 }
 
 git_dirty() {
-    if [[ -n "$(git -C "${ROOT_DIR}" status --porcelain=v1 2>/dev/null)" ]]; then
+    if [[ -n "$(git -C "${ROOT_DIR}" status --porcelain=v1 -- . ':(exclude)scripts/records' 2>/dev/null)" ]]; then
         printf 'true'
     else
         printf 'false'
