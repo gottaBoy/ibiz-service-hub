@@ -1,0 +1,21 @@
+ARG JAVA_IMAGE=eclipse-temurin:17-jdk
+FROM ${JAVA_IMAGE}
+
+ARG IBIZ_VERSION=unknown
+
+LABEL org.opencontainers.image.title="iBiz EBSX All-in-One Runtime" \
+      org.opencontainers.image.version="${IBIZ_VERSION}" \
+      org.opencontainers.image.source="local-source-reactor"
+
+ENV TZ=Asia/Shanghai \
+    SPRING_OUTPUT_ANSI_ENABLED=ALWAYS \
+    IBIZ_SLEEP=0 \
+    JAVA_OPTS="--add-exports=java.naming/com.sun.jndi.ldap=ALL-UNNAMED"
+
+COPY ibiz-ebsx-allinone-rt.jar /ibiz-ebsx-allinone-rt.jar
+
+EXPOSE 30000
+
+ENTRYPOINT ["sh", "-c"]
+
+CMD ["echo \"The application will start in ${IBIZ_SLEEP}s...\" && sleep \"${IBIZ_SLEEP}\" && exec java ${JAVA_OPTS} -Duser.timezone=\"${TZ}\" -Djava.security.egd=file:/dev/./urandom -jar /ibiz-ebsx-allinone-rt.jar"]
