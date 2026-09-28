@@ -99,6 +99,43 @@ test('local build receipt has the reproducibility schema', () => {
   }
 });
 
+test('local build never overwrites an existing receipt', () => {
+  const tempDir = mkdtempSync('/tmp/backend-local-build-record-test-');
+  const receipt = resolve(tempDir, 'receipt.json');
+  try {
+    const first = run('bash', [
+      wrapper,
+      '--skip-maven',
+      '--skip-docker',
+      '--platform',
+      'linux/arm64',
+      '--tag',
+      'receipt-overwrite-test',
+      '--record',
+      receipt,
+    ], { timeout: 60000 });
+    assert.equal(first.status, 0, first.stderr);
+    const before = read(receipt);
+
+    const second = run('bash', [
+      wrapper,
+      '--skip-maven',
+      '--skip-docker',
+      '--platform',
+      'linux/arm64',
+      '--tag',
+      'receipt-overwrite-test',
+      '--record',
+      receipt,
+    ], { timeout: 60000 });
+    assert.notEqual(second.status, 0);
+    assert.match(`${second.stdout}\n${second.stderr}`, /record file already exists/);
+    assert.equal(read(receipt), before);
+  } finally {
+    rmSync(tempDir, { recursive: true, force: true });
+  }
+});
+
 test('reactor versions and boot entrypoints are aligned', () => {
   const rootPom = read(resolve(serviceHubRoot, 'pom.xml'));
   const runtimePom = read(resolve(serviceHubRoot, 'ibiz-ebsx-runtime/pom.xml'));

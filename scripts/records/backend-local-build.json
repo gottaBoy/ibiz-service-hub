@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-09-28T02:36:34Z",
+  "source": {
+    "root": "/home/my/workspace/ainfra/aibiz/ibiz-service-hub",
+    "sha256": "44a7c5da7ef45da611af60b126bb90303e1717b8ab6e9146d328b84533434b02",
+    "git_commit": "e08457c55262022bf62b2c8ceba487b7b142f66e",
+    "git_dirty": false
+  },
+  "reactor": {
+    "version": "8.1.0.584.1",
+    "runtime_version": "8.1.0.584.1",
+    "gateway_version": "8.1.0.584.1"
+  },
+  "build": {
+    "platform": "linux/arm64",
+    "architecture": "arm64",
+    "maven": {
+      "requested": "maven:3.9-eclipse-temurin-17",
+      "resolved": "maven@sha256:42a3ac393abbc64dae6c96703e5ead2e921fe9103371ac58b5b404b0d6a26502",
+      "image_id": "sha256:f0be3f7442b426f4bc8238fcb0fc5545be96d3266511aed07f767fd51b78a09e"
+    },
+    "java": {
+      "requested": "eclipse-temurin:17-jdk",
+      "resolved": "eclipse-temurin@sha256:bc033b57e11b773c3043babfd664e7a5ef110805548b921cbfc3e8c67a0725d6",
+      "image_id": "sha256:42ec2338f05fe160e6885cc5d245e8eada367f3954f41a8fb7adbebc0e473bb4"
+    },
+    "command": "scripts/build-local-images.sh --platform linux/arm64 --tag 8.1.0.584.1-local"
+  },
+  "artifacts": {
+    "allinone": {
+      "path": "ibiz-ebsx-runtime/ibiz-ebsx-allinone-rt.jar",
+      "sha256": "2a6d4b6365379fd259e2eef99eb3f27fba2a63988d78c14d266a9d4c056abae0"
+    },
+    "gateway": {
+      "path": "ibiz-ebsx-gateway/ibiz-ebsx-gateway.jar",
+      "sha256": "2a993d2d2a68a4688fe71f1785c0ad888a262b4cdb044630b10c5181892eb95c"
+    }
+  },
+  "images": {
+    "prefix": "aibiz",
+    "tag": "8.1.0.584.1-local",
+    "allinone": {
+      "reference": "aibiz/ibiz-ebsx-allinone-rt:8.1.0.584.1-local",
+      "image_id": "sha256:232c2aede27029bf47b3fd1e9179ec88e61a38f33f94daf3ea12e9d96e8ec39c",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    },
+    "gateway": {
+      "reference": "aibiz/ibiz-ebsx-gateway:8.1.0.584.1-local",
+      "image_id": "sha256:6b9c074ac7aa1f5a000f5edb0c5048d19a5959a4dd27251477ae2ec587b5ddd9",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    }
+  }
+}

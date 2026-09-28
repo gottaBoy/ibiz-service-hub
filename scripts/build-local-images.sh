@@ -59,6 +59,12 @@ fail() {
     exit 1
 }
 
+ensure_record_path_available() {
+    if [[ -e "${RECORD_FILE}" || -L "${RECORD_FILE}" ]]; then
+        fail "record file already exists: ${RECORD_FILE}; use --record with a new path"
+    fi
+}
+
 while (($#)); do
     case "$1" in
         --skip-maven)
@@ -100,6 +106,7 @@ command -v jq >/dev/null 2>&1 || fail "jq is required to write the reproducibili
 command -v sha256sum >/dev/null 2>&1 || fail "sha256sum is required for source and artifact receipts"
 
 [[ -f "${ROOT_DIR}/pom.xml" ]] || fail "Maven reactor root is missing: ${ROOT_DIR}/pom.xml"
+ensure_record_path_available
 
 read_reactor_version() {
     sed -n 's:^[[:space:]]*<version>\([^<][^<]*\)</version>[[:space:]]*$:\1:p' \
