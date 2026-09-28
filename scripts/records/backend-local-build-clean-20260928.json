@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-09-28T05:26:05Z",
+  "source": {
+    "root": "/home/my/workspace/ainfra/aibiz/ibiz-service-hub",
+    "sha256": "8a763e1f30a4c0654310cdb853517d46fa1d6e6412abb46f12ff5aeee09e5a98",
+    "git_commit": "7b073023724fb3dfe6537016e8dd6f68e8dd45a5",
+    "git_dirty": false
+  },
+  "reactor": {
+    "version": "8.1.0.584.1",
+    "runtime_version": "8.1.0.584.1",
+    "gateway_version": "8.1.0.584.1"
+  },
+  "build": {
+    "platform": "linux/arm64",
+    "architecture": "arm64",
+    "maven": {
+      "requested": "maven:3.9-eclipse-temurin-17",
+      "resolved": "maven@sha256:42a3ac393abbc64dae6c96703e5ead2e921fe9103371ac58b5b404b0d6a26502",
+      "image_id": "sha256:f0be3f7442b426f4bc8238fcb0fc5545be96d3266511aed07f767fd51b78a09e"
+    },
+    "java": {
+      "requested": "eclipse-temurin:17-jdk",
+      "resolved": "eclipse-temurin@sha256:bc033b57e11b773c3043babfd664e7a5ef110805548b921cbfc3e8c67a0725d6",
+      "image_id": "sha256:42ec2338f05fe160e6885cc5d245e8eada367f3954f41a8fb7adbebc0e473bb4"
+    },
+    "command": "scripts/build-local-images.sh --platform linux/arm64 --tag 8.1.0.584.1-local-clean-20260928"
+  },
+  "artifacts": {
+    "allinone": {
+      "path": "ibiz-ebsx-runtime/ibiz-ebsx-allinone-rt.jar",
+      "sha256": "db2f18e4e43f0489cc2c40b145b626a24d28076295278e193e86b22f96212aad"
+    },
+    "gateway": {
+      "path": "ibiz-ebsx-gateway/ibiz-ebsx-gateway.jar",
+      "sha256": "a6aba9b82f8f6ae498d66e981b94852dffb77c9f478844771e8e16f76fe333de"
+    }
+  },
+  "images": {
+    "prefix": "aibiz",
+    "tag": "8.1.0.584.1-local-clean-20260928",
+    "allinone": {
+      "reference": "aibiz/ibiz-ebsx-allinone-rt:8.1.0.584.1-local-clean-20260928",
+      "image_id": "sha256:8d6ec725d83b030b534afaf087f08a6ad9fc23ffd374ba7a27c0cfc3bf0670da",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    },
+    "gateway": {
+      "reference": "aibiz/ibiz-ebsx-gateway:8.1.0.584.1-local-clean-20260928",
+      "image_id": "sha256:60187c28d0f800bed325344bb9e640a8f0fe6343f6023689b650af5032032a2a",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    }
+  }
+}
