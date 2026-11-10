@@ -11,6 +11,7 @@ import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.oauth2.common.DefaultOAuth2AccessToken;
 import org.springframework.security.oauth2.common.OAuth2AccessToken;
@@ -53,6 +54,8 @@ import net.ibizsys.central.cloud.core.util.domain.OrgSystem;
 import net.ibizsys.central.cloud.uaa.core.IUAAUtilSystemRuntime;
 import net.ibizsys.central.cloud.uaa.core.security.AuthorizationLogin;
 import net.ibizsys.runtime.util.DataTypeUtils;
+import net.ibizsys.runtime.util.Errors;
+import net.ibizsys.central.service.ISubSysServiceAPIRuntimeException;
 
 @RestController()
 @RequestMapping("")
@@ -288,8 +291,28 @@ public class UAARestController {
 	}
 
 	@GetMapping(value = { "/uaa/refresh_token/{refresh_token}" })
-	public ResponseEntity<AuthenticationInfo> refreshToken2(@PathVariable("refresh_token") String refresh_token) {
-		return ResponseEntity.ok().body(getCloudUAAUtilRuntime().refreshToken2(refresh_token));
+	public ResponseEntity<?> refreshToken2(@PathVariable("refresh_token") String refresh_token) {
+		try {
+			return ResponseEntity.ok().body(getCloudUAAUtilRuntime().refreshToken2(refresh_token));
+		} catch (RuntimeException ex) {
+			int status = 500;
+			Throwable cause = ex;
+			for (int depth = 0; cause != null && depth < 32; depth++, cause = cause.getCause()) {
+				if (cause instanceof ISubSysServiceAPIRuntimeException) {
+					int candidate = ((ISubSysServiceAPIRuntimeException) cause).getStatusCode();
+					if (candidate == 400 || candidate == 401 || candidate == 403 || (candidate >= 500 && candidate <= 599)) {
+						status = candidate;
+					}
+					break;
+				}
+			}
+			ObjectNode error = MAPPER.createObjectNode();
+			error.put("type", "RefreshTokenError");
+			error.put("code", status < 500 ? Errors.ACCESSDENY : Errors.INTERNALERROR);
+			error.put("message", status < 500 ? "Refresh token is invalid or expired" : "Refresh service request failed");
+			return ResponseEntity.status(status).contentType(MediaType.APPLICATION_JSON)
+					.header("Cache-Control", "no-store").header("Pragma", "no-cache").body(error);
+		}
 	}
 	
 	

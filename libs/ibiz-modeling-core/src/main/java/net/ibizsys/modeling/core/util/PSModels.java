@@ -135,6 +135,8 @@ public final class PSModels {
         registerModel(PSDEVSLNSYSAPI);
         registerModel(PSDEVSLNSYSAPP);
         registerModel(PSDEVCENTER);
+        registerModel(PSMODULE);
+        registerModel(PSDATAENTITY);
         registerModel(PSMODELRT);
         registerModel(PSSYSMODELINST);
         registerModel(PSSYSRUNSESSION);

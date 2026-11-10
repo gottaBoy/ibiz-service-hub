@@ -903,14 +903,7 @@ implements IDataEntityRuntime {
         return (MergeModelDSLResult) executeAction(ACTION_MERGEMODELDSL, null, new Object[]{input});
     }
 
-    // onExecuteActionReal / onExecuteActionUnknown -----------------------------
-
-    @Override
-    protected Object onExecuteActionReal(String actionName, IPSDEAction action,
-            Object[] args, Object actionData) throws Throwable {
-        // Subclasses override to intercept known actions
-        return null;
-    }
+    // Unknown modeling actions ------------------------------------------------
 
     @Override
     protected Object onExecuteActionUnknown(String actionName, IPSDEAction action,
@@ -948,10 +941,6 @@ implements IDataEntityRuntime {
     @Override
     protected Object doExecuteActionReal(String actionName, IPSDEAction action,
             Object[] args, Object actionData) throws Throwable {
-        Object ret = onExecuteActionReal(actionName, action, args, actionData);
-        if (ret != null) {
-            return ret;
-        }
         // Enable nested-data-light mode for all modeling actions
         ActionSession session = ActionSessionManager.getCurrentSessionMust();
         boolean prevLight = session.isEnableNestedDataLightMode();

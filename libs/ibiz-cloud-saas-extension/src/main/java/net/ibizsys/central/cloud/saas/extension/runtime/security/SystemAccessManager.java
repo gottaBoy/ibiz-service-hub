@@ -2,6 +2,7 @@ package net.ibizsys.central.cloud.saas.extension.runtime.security;
 
 import net.ibizsys.central.cloud.core.dataentity.security.IDataEntityAccessManager;
 import net.ibizsys.central.cloud.saas.extension.runtime.dataentity.security.DataEntityAccessManager;
+import net.ibizsys.central.cloud.saas.extension.runtime.dataentity.security.InternalMessageAccessManager;
 import net.ibizsys.central.dataentity.IDataEntityRuntime;
 
 /*
@@ -13,6 +14,9 @@ public class SystemAccessManager extends net.ibizsys.central.cloud.core.security
     
     @Override
     public IDataEntityAccessManager createDataEntityAccessManager(IDataEntityRuntime iDataEntityRuntime) {
+        if ("INTERNAL_MESSAGE".equalsIgnoreCase(iDataEntityRuntime.getName())) {
+            return new InternalMessageAccessManager();
+        }
     	return new DataEntityAccessManager();
     }
 

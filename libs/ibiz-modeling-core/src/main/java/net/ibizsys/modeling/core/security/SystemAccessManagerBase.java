@@ -205,7 +205,7 @@ implements ISystemAccessManager {
                 appData.getContextIf().set("srfmodelingver", (Object)this.getRuntimeModelVer());
             }
         }
-        if (StringUtils.hasLength((String)iPSDevSysUser.getPSDevSlnSysId())) {
+        if (iPSDevSysUser != null && StringUtils.hasLength((String)iPSDevSysUser.getPSDevSlnSysId())) {
             int nModelInstVer;
             PSDevSlnSysDTO psDevSlnSys = (PSDevSlnSysDTO)this.iPSDevSlnSysService.get(iPSDevSysUser.getPSDevSlnSysId());
             Integer nSysState = psDevSlnSys.getDevSysState();
@@ -292,7 +292,7 @@ implements ISystemAccessManager {
             } else {
                 psDevUser.setLoginName(iAuthenticationUser.getLoginname());
             }
-            this.getSysCacheUtilRuntime(false).set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), this.getPSDevUserKey(), (Object)psDevUser, iAuthenticationUser.getExpirein());
+            this.getSysCacheUtilRuntime(false).set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), this.getPSDevUserKey(), (Object)PSDevUserCacheCodec.encode(psDevUser), iAuthenticationUser.getExpirein());
             return psDevUser;
         }
         if (this.testSysUserRole(iEmployeeContext, USERROLE_WXMP_USERS)) {
@@ -301,7 +301,7 @@ implements ISystemAccessManager {
             psDevUser.setPSDevUserId(iEmployeeContext.getUserid());
             psDevUser.setPSDevUserName(iEmployeeContext.getUsername());
             psDevUser.setLoginName(iAuthenticationUser.getLoginname());
-            this.getSysCacheUtilRuntime(false).set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), this.getPSDevUserKey(), (Object)psDevUser, iAuthenticationUser.getExpirein());
+            this.getSysCacheUtilRuntime(false).set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), this.getPSDevUserKey(), (Object)PSDevUserCacheCodec.encode(psDevUser), iAuthenticationUser.getExpirein());
             return psDevUser;
         }
         log.error((Object)String.format("\u65e0\u6cd5\u83b7\u53d6\u5f53\u524d\u7528\u6237[%s@%s]\u7ed1\u5b9a\u5f00\u53d1\u7528\u6237", iAuthenticationUser.getLoginname(), iEmployeeContext.getTenant()));
@@ -311,8 +311,12 @@ implements ISystemAccessManager {
     @Override
     public IPSDevUser getCurrentPSDevUser() {
         IAuthenticationUser iAuthenticationUser = AuthenticationUser.getCurrentMust();
-        PSDevUser psDevUser = (PSDevUser)this.getSysCacheUtilRuntime(false).get(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), this.getPSDevUserKey(), PSDevUser.class);
-        if (psDevUser != null) {
+        PSDevUserCacheCodec.Entry entry = this.getSysCacheUtilRuntime(false).get(
+                CloudCacheTagUtils.getAuthenticationUserCat(iAuthenticationUser.getUsername(), iAuthenticationUser.getToken()),
+                this.getPSDevUserKey(), PSDevUserCacheCodec.Entry.class);
+        IPSDevUser psDevUser = (IPSDevUser)PSDevUserCacheCodec.decode(
+                entry, IPSDevUserBase.TARGETTYPE_CENTER, this.getDefaultDCId());
+        if (psDevUser != null && !psDevUser.isExpired()) {
             return psDevUser;
         }
         return null;
@@ -354,11 +358,11 @@ implements ISystemAccessManager {
     }
 
     protected String getPSDevUserKey() {
-        return String.format("ex-%s-%s", PARAM_PSDEVUSER, SYSTEMID_CENTRAL);
+        return PSDevUserCacheCodec.cacheKey(String.format("ex-%s-%s", PARAM_PSDEVUSER, SYSTEMID_CENTRAL));
     }
 
     protected String getPSDevUserKey(String strObjectType, String strObjectId) {
-        return String.format("ex-%s-%s-%s-%s", PARAM_PSDEVUSER, SYSTEMID_CENTRAL, strObjectType, strObjectId);
+        return PSDevUserCacheCodec.cacheKey(String.format("ex-%s-%s-%s-%s", PARAM_PSDEVUSER, SYSTEMID_CENTRAL, strObjectType, strObjectId));
     }
 
     @Override
@@ -373,19 +377,48 @@ implements ISystemAccessManager {
     }
 
     protected IPSDevUserBase onGetPSDevUserBase(String strObjectType, String strObjectId) throws Throwable {
-        String strPSDevUserKey = this.getPSDevUserKey(strObjectType, strObjectId);
-        IAuthenticationUser iAuthenticationUser = AuthenticationUser.getCurrentMust();
-        IPSDevUserBase iPSDevUserBase = null;
-        if ("SLN".equalsIgnoreCase(strObjectType)) {
-            iPSDevUserBase = (IPSDevUserBase)this.getSysCacheUtilRuntime().get(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), strPSDevUserKey, PSDevSlnUser.class);
-        } else if ("SYS".equalsIgnoreCase(strObjectType)) {
-            iPSDevUserBase = (IPSDevUserBase)this.getSysCacheUtilRuntime().get(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), strPSDevUserKey, PSDevSysUser.class);
-        } else {
+        if (!"SLN".equalsIgnoreCase(strObjectType) && !"SYS".equalsIgnoreCase(strObjectType)) {
             throw new Exception(String.format("\u672a\u652f\u6301\u7684\u76ee\u6807\u7c7b\u578b[%1$s]", strObjectType));
         }
+        if (!isValidPSDevSlnSysId(strObjectId)) {
+            throw new Exception("Invalid authorization model library identifier");
+        }
+        String strPSDevUserKey = this.getPSDevUserKey(strObjectType, strObjectId);
+        IAuthenticationUser iAuthenticationUser = AuthenticationUser.getCurrentMust();
+        PSDevUserCacheCodec.Entry entry = this.getSysCacheUtilRuntime().get(
+                CloudCacheTagUtils.getAuthenticationUserCat(iAuthenticationUser.getUsername(), iAuthenticationUser.getToken()),
+                strPSDevUserKey, PSDevUserCacheCodec.Entry.class);
+        IPSDevUserBase iPSDevUserBase = PSDevUserCacheCodec.decode(entry, strObjectType, strObjectId);
         if (iPSDevUserBase instanceof IPSDevSlnUser) {
-            if (((IPSDevSlnUser)iPSDevUserBase).getAccMode() == 0) {
+            if (((IPSDevSlnUser)iPSDevUserBase).getAccMode() <= 0 || iPSDevUserBase.isExpired()) {
                 return null;
+            }
+            if (((IPSDevSlnUser)iPSDevUserBase).isAdminMode()) {
+                IPSDevUser centerUser = this.getCurrentPSDevUser();
+                if (centerUser == null || !centerUser.isAdminMode() || centerUser.isExpired()
+                        || !StringUtils.hasText(centerUser.getPSDevUserId())
+                        || !centerUser.getPSDevUserId().equalsIgnoreCase(iPSDevUserBase.getPSDevUserId())) {
+                    return null;
+                }
+                // Cached admin declarations cannot establish the target's actual center.
+                String targetCenter;
+                if ("SYS".equalsIgnoreCase(strObjectType)) {
+                    PSDevSlnSysDTO target = (PSDevSlnSysDTO)this.iPSDevSlnSysService.get(strObjectId, true);
+                    if (target == null || !strObjectId.equalsIgnoreCase(target.getPSDevSlnSysId())) {
+                        return null;
+                    }
+                    targetCenter = target.getPSDevCenterId();
+                } else {
+                    PSDevSlnDTO target = (PSDevSlnDTO)this.iPSDevSlnService.get(strObjectId, true);
+                    if (target == null || !strObjectId.equalsIgnoreCase(target.getPSDevSlnId())) {
+                        return null;
+                    }
+                    targetCenter = target.getPSDevCenterId();
+                }
+                if (!isCenterAdministrator(centerUser, targetCenter)
+                        || !targetCenter.equalsIgnoreCase(iPSDevUserBase.getPSDevCenterId())) {
+                    return null;
+                }
             }
             return iPSDevUserBase;
         }
@@ -421,7 +454,7 @@ implements ISystemAccessManager {
             if (iPSDevUser != null) {
                 psDevUser.setPSDevUserId(iPSDevUser.getPSDevUserId());
                 psDevUser.setPSDevUserName(iPSDevUser.getPSDevUserName());
-                if (iPSDevUser.isAdminMode()) {
+                if (isCenterAdministrator(iPSDevUser, psDevSlnSysDTO.getPSDevCenterId())) {
                     psDevUser.setAdminMode(true);
                     psDevUser.setAccMode(3);
                 }
@@ -430,6 +463,12 @@ implements ISystemAccessManager {
                 psDevUser.setPSDevUserName(EmployeeContext.getCurrentMust().getUsername());
             }
             psDevUser.setExpiredTime(psDevSlnSysDTO.getExpriedTime());
+            if (!psDevUser.isAdminMode() && psDevSlnUserDTO != null
+                    && psDevSlnUserDTO.getExpiredTime() != null
+                    && (psDevUser.getExpiredTime() == null
+                        || psDevSlnUserDTO.getExpiredTime().before(psDevUser.getExpiredTime()))) {
+                psDevUser.setExpiredTime(psDevSlnUserDTO.getExpiredTime());
+            }
             psDevUser.setPSDevCenterId(psDevSlnSysDTO.getPSDevCenterId());
             psDevUser.setPSDevSlnId(psDevSlnSysDTO.getPSDevSlnId());
             if (psDevUser.isExpired()) {
@@ -449,7 +488,7 @@ implements ISystemAccessManager {
             if (iPSDevUser != null) {
                 psDevUser.setPSDevUserId(iPSDevUser.getPSDevUserId());
                 psDevUser.setPSDevUserName(iPSDevUser.getPSDevUserName());
-                if (iPSDevUser.isAdminMode()) {
+                if (isCenterAdministrator(iPSDevUser, psDevSlnDTO.getPSDevCenterId())) {
                     psDevUser.setAdminMode(true);
                     psDevUser.setAccMode(3);
                 }
@@ -459,15 +498,33 @@ implements ISystemAccessManager {
             }
             psDevUser.setPSDevCenterId(psDevSlnDTO.getPSDevCenterId());
             psDevUser.setPSDevSlnId(psDevSlnDTO.getPSDevSlnId());
+            if (!psDevUser.isAdminMode() && psDevSlnUserDTO != null) {
+                psDevUser.setExpiredTime(psDevSlnUserDTO.getExpiredTime());
+            }
+            if (psDevUser.isExpired()) {
+                throw new ErrorException(String.format(SYSSTATEMSG_EXPIRED, new Object[0]), 2);
+            }
             iPSDevUserBase = psDevUser;
         } else {
             throw new Exception(String.format("\u672a\u652f\u6301\u7684\u76ee\u6807\u7c7b\u578b[%1$s]", strObjectType));
         }
-        this.getSysCacheUtilRuntime().set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), strPSDevUserKey, (Object)iPSDevUserBase);
-        if (iPSDevUserBase instanceof IPSDevSlnUser && ((IPSDevSlnUser)iPSDevUserBase).getAccMode() == 0) {
+        String authorizedRoot = iPSDevUserBase instanceof IPSDevSysUser
+                ? ((IPSDevSysUser)iPSDevUserBase).getPSDevSlnSysId()
+                : ((IPSDevSlnUser)iPSDevUserBase).getPSDevSlnId();
+        if (!strObjectId.equalsIgnoreCase(authorizedRoot)) {
+            throw new Exception("Authorization root does not match the requested model library");
+        }
+        this.getSysCacheUtilRuntime().set(CloudCacheTagUtils.getAuthenticationUserCat((String)iAuthenticationUser.getUsername(), (String)iAuthenticationUser.getToken()), strPSDevUserKey, (Object)PSDevUserCacheCodec.encode(iPSDevUserBase));
+        if (iPSDevUserBase instanceof IPSDevSlnUser && ((IPSDevSlnUser)iPSDevUserBase).getAccMode() <= 0) {
             return null;
         }
         return iPSDevUserBase;
+    }
+
+    private static boolean isCenterAdministrator(IPSDevUser user, String targetCenter) {
+        return user != null && user.isAdminMode() && !user.isExpired()
+                && StringUtils.hasText(targetCenter)
+                && targetCenter.equalsIgnoreCase(user.getPSDevCenterId());
     }
 
     protected PSDevSlnUserDTO getPSDevSlnUserDTO(PSDevSlnSysDTO psDevSlnSysDTO, String strPSDevUserId, boolean bTryMode) throws Exception {
@@ -497,10 +554,12 @@ implements ISystemAccessManager {
         }
         if (!ObjectUtils.isEmpty(page)) {
             for (PSDevSlnUserDTO psDevSlnUserDTO : page) {
+                if (!isActiveSystemGrant(psDevSlnUserDTO)) continue;
                 if (DataTypeUtils.asInteger((Object)psDevSlnUserDTO.getAllSysFlag(), (Integer)0) != 0 || DataTypeUtils.compare((String)psDevSlnUserDTO.getPSDevSlnSysId(), (String)psDevSlnSysDTO.getPSDevSlnSysId(), (boolean)true) != 0L || DataTypeUtils.compare((String)psDevSlnUserDTO.getPSDevUserObjId(), (String)strPSDevUserId, (boolean)true) != 0L) continue;
                 return psDevSlnUserDTO;
             }
             for (PSDevSlnUserDTO psDevSlnUserDTO : page) {
+                if (!isActiveSystemGrant(psDevSlnUserDTO)) continue;
                 if (DataTypeUtils.asInteger((Object)psDevSlnUserDTO.getAllSysFlag(), (Integer)0) != 1 || DataTypeUtils.compare((String)psDevSlnUserDTO.getPSDevUserObjId(), (String)strPSDevUserId, (boolean)true) != 0L) continue;
                 return psDevSlnUserDTO;
             }
@@ -511,26 +570,42 @@ implements ISystemAccessManager {
         throw new Exception(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u7cfb\u7edf\u8bbf\u95ee\u7528\u6237[%s-%s]", psDevSlnSysDTO.getPSDevSlnSysId(), strPSDevUserId));
     }
 
+    private static boolean isActiveSystemGrant(PSDevSlnUserDTO grant) {
+        return grant != null && grant.getAllSysFlag() != null
+                && grant.getAccMode() != null && grant.getAccMode() >= 0
+                && (grant.getExpiredTime() == null
+                    || grant.getExpiredTime().getTime() >= System.currentTimeMillis());
+    }
+
     protected PSDevSlnUserDTO getPSDevSlnUserDTO(PSDevSlnDTO psDevSlnDTO, String strPSDevUserId, boolean bTryMode) throws Exception {
         int nAccMode = 0;
+        PSDevSlnUserDTO grant = null;
         if (strPSDevUserId.equals(psDevSlnDTO.getAdminPSDevUserId())) {
             nAccMode = 19;
         } else {
-            Integer nRet = this.getPSDevUserAccMode(psDevSlnDTO.getPSDevSlnId(), PSModelEnums.DevSlnUserTarget.ALL.value, null, (Object)psDevSlnDTO, strPSDevUserId);
-            if (nRet != null) {
-                nAccMode = nRet;
+            grant = this.getPSDevUserGrant(psDevSlnDTO.getPSDevSlnId(), PSModelEnums.DevSlnUserTarget.ALL.value, null, strPSDevUserId);
+            if (grant != null) {
+                nAccMode = grant.getAccMode();
             }
         }
         PSDevSlnUserDTO psDevSlnUserDTO = (PSDevSlnUserDTO)this.iPSDevSlnUserService.getDataEntityRuntime().createEntity();
         psDevSlnUserDTO.setAccMode(nAccMode);
+        if (grant != null) {
+            psDevSlnUserDTO.setExpiredTime(grant.getExpiredTime());
+        }
         psDevSlnUserDTO.setPSDevSlnId(psDevSlnDTO.getPSDevSlnId());
         psDevSlnUserDTO.setPSDevUserObjId(strPSDevUserId);
         return psDevSlnUserDTO;
     }
 
     protected Integer getPSDevUserAccMode(String strPSDevSlnId, int nTargetType, String strTargetId, Object objTarget, String strPSDevUserId) throws Exception {
+        PSDevSlnUserDTO grant = this.getPSDevUserGrant(strPSDevSlnId, nTargetType, strTargetId, strPSDevUserId);
+        return grant == null ? null : grant.getAccMode();
+    }
+
+    protected PSDevSlnUserDTO getPSDevUserGrant(String strPSDevSlnId, int nTargetType, String strTargetId, String strPSDevUserId) throws Exception {
         Page<PSDevSlnUserDTO> page;
-        Integer nAccMode = null;
+        PSDevSlnUserDTO selectedGrant = null;
         SearchContextDTO searchContextDTO = new SearchContextDTO();
         searchContextDTO.eq("PSDEVSLNID", (Object)strPSDevSlnId);
         searchContextDTO.eq("PSDEVUSEROBJID", (Object)strPSDevUserId);
@@ -543,26 +618,39 @@ implements ISystemAccessManager {
         }
         if (!ObjectUtils.isEmpty(page)) {
             for (PSDevSlnUserDTO psDevSlnUserDTO : page) {
-                if (psDevSlnUserDTO.getExpiredTime() != null && psDevSlnUserDTO.getExpiredTime().getTime() < System.currentTimeMillis() || psDevSlnUserDTO.getAllSysFlag() == null || psDevSlnUserDTO.getAccMode() == null) continue;
+                if (!isActiveSystemGrant(psDevSlnUserDTO)) continue;
+                int targetType = psDevSlnUserDTO.getAllSysFlag();
                 if (nTargetType == PSModelEnums.DevSlnUserTarget.ALL.value) {
-                    if (psDevSlnUserDTO.getAllSysFlag() == PSModelEnums.DevSlnUserTarget.ALL.value) {
-                        return psDevSlnUserDTO.getAccMode();
+                    if (targetType == PSModelEnums.DevSlnUserTarget.ALL.value) {
+                        return psDevSlnUserDTO;
                     }
-                    if (nAccMode != null && 1 <= nAccMode) continue;
-                    nAccMode = 1;
+                    if (psDevSlnUserDTO.getAccMode() <= 0
+                            || (targetType != PSModelEnums.DevSlnUserTarget.SYS.value
+                                && targetType != PSModelEnums.DevSlnUserTarget.TEMPL.value
+                                && targetType != PSModelEnums.DevSlnUserTarget.DYNAINST.value)) continue;
+                    if (selectedGrant == null) {
+                        selectedGrant = new PSDevSlnUserDTO();
+                        selectedGrant.setAccMode(IPSDevUserBase.ACCMODE_READ);
+                        selectedGrant.setExpiredTime(psDevSlnUserDTO.getExpiredTime());
+                    } else if (selectedGrant.getExpiredTime() != null
+                            && (psDevSlnUserDTO.getExpiredTime() == null
+                                || selectedGrant.getExpiredTime().before(psDevSlnUserDTO.getExpiredTime()))) {
+                        // Derived READ remains valid while any supporting specific grant is active.
+                        selectedGrant.setExpiredTime(psDevSlnUserDTO.getExpiredTime());
+                    }
                     continue;
                 }
                 if (nTargetType != PSModelEnums.DevSlnUserTarget.SYS.value) continue;
-                if (psDevSlnUserDTO.getAllSysFlag() == PSModelEnums.DevSlnUserTarget.ALL.value) {
-                    if (nAccMode != null && psDevSlnUserDTO.getAccMode() <= nAccMode) continue;
-                    nAccMode = psDevSlnUserDTO.getAccMode();
+                if (targetType == PSModelEnums.DevSlnUserTarget.ALL.value) {
+                    if (selectedGrant != null && psDevSlnUserDTO.getAccMode() <= selectedGrant.getAccMode()) continue;
+                    selectedGrant = psDevSlnUserDTO;
                     continue;
                 }
-                if (psDevSlnUserDTO.getAllSysFlag() != PSModelEnums.DevSlnUserTarget.SYS.value || DataTypeUtils.compare((String)psDevSlnUserDTO.getPSDevSlnSysId(), (String)strTargetId, (boolean)false) != 0L) continue;
-                return psDevSlnUserDTO.getAccMode();
+                if (targetType != PSModelEnums.DevSlnUserTarget.SYS.value || DataTypeUtils.compare((String)psDevSlnUserDTO.getPSDevSlnSysId(), (String)strTargetId, (boolean)false) != 0L) continue;
+                return psDevSlnUserDTO;
             }
         }
-        return nAccMode;
+        return selectedGrant;
     }
 
     @Override
@@ -580,7 +668,7 @@ implements ISystemAccessManager {
         Object item;
         IPSDevSysUser iPSDevSysUser = PSDevSysUserHolder.peek();
         if (iPSDevSysUser != null) {
-            return iPSDevSysUser;
+            return this.requireActivePSDevSysUser(iPSDevSysUser, bTryMode);
         }
         IAppContext iAppContext = ActionSessionManager.getAppContext();
         if (iAppContext == null) {
@@ -590,27 +678,62 @@ implements ISystemAccessManager {
             }
             throw new Exception("\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548");
         }
-        String strPSDevSlnSysId = (String)iAppContext.get("PSDEVSLNSYS");
-        if (!StringUtils.hasLength((String)strPSDevSlnSysId)) {
+        Object root = iAppContext.get("PSDEVSLNSYS");
+        if (!(root instanceof String) || !isValidPSDevSlnSysId((String)root)) {
             if (bTryMode) {
                 log.debug((Object)"\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6\uff0c\u5ffd\u7565\u83b7\u53d6\u5f00\u53d1\u7cfb\u7edf\u7528\u6237");
                 return null;
             }
             throw new Exception("\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6");
         }
+        String strPSDevSlnSysId = (String)root;
         ActionSession actionSession = ActionSessionManager.getCurrentSession();
         String strCacheTag = String.format("CACHE_%s_%s", strPSDevSlnSysId, IPSDevSysUser.class);
         if (actionSession != null && (item = actionSession.getActionParam(strCacheTag)) != null) {
-            return (IPSDevSysUser)item;
+            return this.requirePSDevSysUserForRoot(
+                    item instanceof IPSDevSysUser ? (IPSDevSysUser)item : null,
+                    strPSDevSlnSysId, bTryMode);
         }
         iPSDevSysUser = (IPSDevSysUser)this.getPSDevUserBase("SYS", strPSDevSlnSysId);
+        iPSDevSysUser = this.requirePSDevSysUserForRoot(iPSDevSysUser, strPSDevSlnSysId, bTryMode);
         if (iPSDevSysUser == null) {
-            throw new Exception(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u7cfb\u7edf[%1$s]\u8bbf\u95ee\u7528\u6237\u5bf9\u8c61", strPSDevSlnSysId));
+            return null;
         }
         if (actionSession != null) {
             actionSession.setActionParam(strCacheTag, (Object)iPSDevSysUser);
         }
         return iPSDevSysUser;
+    }
+
+    protected IPSDevSysUser requireActivePSDevSysUser(IPSDevSysUser user, boolean tryMode) throws Exception {
+        if (user != null && user.getAccMode() > 0 && !user.isExpired()
+                && isValidPSDevSlnSysId(user.getPSDevSlnSysId())) {
+            return user;
+        }
+        if (tryMode) {
+            return null;
+        }
+        throw new Exception("\u5f00\u53d1\u7cfb\u7edf\u6388\u6743\u7528\u6237\u65e0\u6548\u6216\u5df2\u8fc7\u671f");
+    }
+
+    protected IPSDevSysUser requirePSDevSysUserForRoot(
+            IPSDevSysUser user, String root, boolean tryMode) throws Exception {
+        user = this.requireActivePSDevSysUser(user, tryMode);
+        if (user == null || root.equalsIgnoreCase(user.getPSDevSlnSysId())) {
+            return user;
+        }
+        if (tryMode) {
+            return null;
+        }
+        throw new Exception("Authorization root does not match the requested model library");
+    }
+
+    private static boolean isValidPSDevSlnSysId(String root) {
+        if (root == null || root.isEmpty()) {
+            return false;
+        }
+        return root.codePoints().noneMatch(character -> Character.isWhitespace(character)
+                || Character.isSpaceChar(character) || Character.isISOControl(character));
     }
 
     @Override

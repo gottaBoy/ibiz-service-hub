@@ -20,6 +20,8 @@ import net.ibizsys.central.cloud.uaa.core.addin.dto.AuthLoginResponse;
 import net.ibizsys.central.cloud.uaa.core.addin.dto.AuthMember;
 import net.ibizsys.central.service.client.IWebClient;
 import net.ibizsys.central.service.client.IWebClientRep;
+import net.ibizsys.central.service.ISubSysServiceAPIRuntimeException;
+import net.ibizsys.central.service.SubSysServiceAPIRuntimeException;
 import net.ibizsys.central.sysutil.ISysCacheUtilRuntime;
 import net.ibizsys.central.util.CacheableActionBuilder;
 import net.ibizsys.runtime.SystemRuntimeException;
@@ -763,11 +765,42 @@ public class RTJWTCloudUAAUtilRuntime extends CloudUAAUtilRuntimeBase {
      */
     @Override
     protected AuthenticationInfo onRefreshToken2(String strToken, long nTokenExpiration) throws Throwable {
-        IWebClientRep<AuthLoginResponse> rep = getWebClient(false).get(String.format(RTAuthAgent.RT_REFRESH_TOKEN_PATH, strToken), null, null, null, AuthLoginResponse.class, null);
+        IWebClientRep<AuthLoginResponse> rep;
+        try {
+            rep = getWebClient(false).get(String.format(RTAuthAgent.RT_REFRESH_TOKEN_PATH, "{refresh_token}"),
+                    Collections.singletonMap("refresh_token", strToken), null, null, AuthLoginResponse.class, null);
+        } catch (Throwable ex) {
+            int status = 502;
+            Throwable cause = ex;
+            for (int depth = 0; cause != null && depth < 32; depth++, cause = cause.getCause()) {
+                if (cause instanceof ISubSysServiceAPIRuntimeException) {
+                    int candidate = ((ISubSysServiceAPIRuntimeException) cause).getStatusCode();
+                    if (candidate == 400 || candidate == 401 || candidate == 403 || (candidate >= 500 && candidate <= 599)) {
+                        status = candidate;
+                    }
+                    break;
+                }
+            }
+            // Do not retain URL-bearing causes: executeAction logs the exception chain.
+            throw new SubSysServiceAPIRuntimeException(this.getSystemRuntime(), null, status,
+                    status < 500 ? "Refresh token is invalid or expired" : "Refresh service request failed", null);
+        }
+        try {
+            return acceptRefreshResponse(rep);
+        } catch (Throwable ex) {
+            throw new SystemRuntimeException(this.getSystemRuntime(), this,
+                    "Refresh token processing failed (" + ex.getClass().getSimpleName() + ")");
+        }
+    }
+
+    protected AuthenticationInfo acceptRefreshResponse(IWebClientRep<AuthLoginResponse> rep) throws Throwable {
         if (rep!=null && rep.getBody() != null) {
             String strNewToken = rep.getBody().getToken();
             String strRefreshToken = rep.getBody().getRefreshToken();
             Integer expiresIn = rep.getBody().getExpiresIn();
+            if (!StringUtils.hasText(strNewToken) || !StringUtils.hasText(strRefreshToken) || expiresIn == null || expiresIn <= 0) {
+                throw new RuntimeException("Refresh service returned an invalid token response");
+            }
             final ISysCacheUtilRuntime iSysCacheUtilRuntime = this.getSysCacheUtilRuntime(true);
             if (iSysCacheUtilRuntime != null) {
                 ISysUAAUtilRuntime iSysUAAUtilRuntime = this.getSystemRuntime().getSysUtilRuntime(ISysUAAUtilRuntime.class, false);

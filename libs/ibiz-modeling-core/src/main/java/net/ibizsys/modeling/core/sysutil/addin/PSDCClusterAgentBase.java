@@ -2,20 +2,18 @@ package net.ibizsys.modeling.core.sysutil.addin;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.ArrayDeque;
-import java.util.Deque;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.util.StringUtils;
 
-import net.ibizsys.central.cloud.core.addin.SysUtilRTAddinBase;
 import net.ibizsys.central.cloud.core.sysutil.ISysCloudLogUtilRuntime;
-import net.ibizsys.central.sysutil.ISysUtilRuntime;
 import net.ibizsys.modeling.core.addin.IPSDCClusterAgent;
 import net.ibizsys.modeling.core.addin.IPSDCMSPlatformAgent;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCClusterDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCMSPlatformNodeDTO;
 import net.ibizsys.runtime.IModelRuntime;
 import net.ibizsys.runtime.ISystemRuntimeBase;
 import net.ibizsys.runtime.SystemRuntimeException;
@@ -23,16 +21,13 @@ import net.ibizsys.runtime.SystemRuntimeException;
 /**
  * Common lifecycle wrapper for deploy-center cluster agents.
  *
- * <p>The full modeling service supplies DTO-backed task persistence. The core
- * module keeps the same extension hooks while using an in-memory task stack so
- * it remains usable without the optional DTO/service module.</p>
+ * <p>The Object-facing interface delegates to typed DTO hooks used by cluster
+ * extensions; task and resource operations are supplied by the central base.</p>
  */
-public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
+public abstract class PSDCClusterAgentBase extends ClusterSysUtilRTAddinBase
         implements IPSDCClusterAgent {
 
     public static final String LOGCAT_CLUSTERAGENT = "CLUSTERAGENT";
-    private static final ThreadLocal<Deque<String>> TASK_IDS =
-            ThreadLocal.withInitial(ArrayDeque::new);
 
     @Autowired(required = false)
     private ISysCloudLogUtilRuntime sysCloudLogUtilRuntime;
@@ -40,8 +35,8 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
     private String serviceUrl;
 
     @Override
-    protected ISysUtilRuntime getSysUtilRuntime() {
-        return (ISysUtilRuntime) getContext().getModelRuntime();
+    protected PSDCClusterDTO getAddinData() {
+        return (PSDCClusterDTO) super.getAddinData();
     }
 
     @Override
@@ -79,6 +74,11 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onAddService(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             Map<String, Object> params) throws Throwable {
+        return onAddService(platformAgent, requireNode(platformNode), params);
+    }
+
+    protected Object onAddService(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -91,6 +91,11 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onUpdateService(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             Map<String, Object> params) throws Throwable {
+        return onUpdateService(platformAgent, requireNode(platformNode), params);
+    }
+
+    protected Object onUpdateService(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -107,6 +112,11 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onRestartService(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             Map<String, Object> params) throws Throwable {
+        return onRestartService(platformAgent, requireNode(platformNode), params);
+    }
+
+    protected Object onRestartService(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -123,6 +133,11 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onStopService(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             Map<String, Object> params) throws Throwable {
+        return onStopService(platformAgent, requireNode(platformNode), params);
+    }
+
+    protected Object onStopService(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -133,11 +148,18 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
             return null;
         }
         return execute("刷新集群服务状态发生异常", null, params,
-                () -> onRefreshServicesState(platformAgent, platformNodes, params));
+                () -> {
+                    List<PSDCMSPlatformNodeDTO> nodes = new ArrayList<>(platformNodes.size());
+                    for (Object node : platformNodes) {
+                        nodes.add(requireNode(node));
+                    }
+                    return onRefreshServicesState(platformAgent, nodes, params);
+                });
     }
 
     protected Object onRefreshServicesState(IPSDCMSPlatformAgent platformAgent,
-            List<?> platformNodes, Map<String, Object> params) throws Throwable {
+            List<PSDCMSPlatformNodeDTO> platformNodes, Map<String, Object> params)
+            throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -154,6 +176,11 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onRemoveService(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             Map<String, Object> params) throws Throwable {
+        return onRemoveService(platformAgent, requireNode(platformNode), params);
+    }
+
+    protected Object onRemoveService(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -191,6 +218,12 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     protected Object onGenerateConfig(IPSDCMSPlatformAgent platformAgent, Object platformNode,
             String config, Map<String, Object> params) throws Throwable {
+        return onGenerateConfig(platformAgent, requireNode(platformNode), config, params);
+    }
+
+    protected Object onGenerateConfig(IPSDCMSPlatformAgent platformAgent,
+            PSDCMSPlatformNodeDTO platformNode, String config, Map<String, Object> params)
+            throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -202,31 +235,18 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
         return LOGCAT_CLUSTERAGENT;
     }
 
-    protected String beginPSDCBKTask(String taskName, String devSlnId, String devSlnSysId) {
-        String id = UUID.randomUUID().toString();
-        TASK_IDS.get().push(id);
-        return id;
-    }
-
-    protected void updateCurrentPSDCBKTask(String taskInfo) {
-    }
-
-    protected void finishCurrentPSDCBKTask(String taskInfo) {
-        popTask();
-    }
-
-    protected void errorCurrentPSDCBKTask(String taskInfo) {
-        popTask();
-    }
-
     private <T> T execute(String errorMessage, String taskName, Map<String, Object> params,
             ThrowingSupplier<T> operation) {
         String taskId = null;
         try {
-            taskId = beginPSDCBKTask(taskName, param(params, "PSDEVSLNID"),
-                    param(params, "PSDEVSLNSYSID"));
+            if (StringUtils.hasLength(taskName)) {
+                taskId = beginPSDCBKTask(taskName, param(params, PARAM_PSDEVSLNID),
+                        param(params, PARAM_PSDEVSLNSYSID));
+            }
             T result = operation.get();
-            finishCurrentPSDCBKTask(null);
+            if (taskId != null) {
+                finishCurrentPSDCBKTask(null);
+            }
             return result;
         } catch (Throwable ex) {
             if (taskId != null) {
@@ -242,17 +262,16 @@ public abstract class PSDCClusterAgentBase extends SysUtilRTAddinBase
 
     private void sendConsole(String devSlnSysId, String message, int level) {
         if (sysCloudLogUtilRuntime != null && StringUtils.hasLength(devSlnSysId)) {
-            sysCloudLogUtilRuntime.sendConsoleMessage(devSlnSysId, "iBizCentral", true,
+            sysCloudLogUtilRuntime.sendConsoleMessage(devSlnSysId, CONSOLESENDER_CENTRAL, true,
                     level, getLogCat(), message);
         }
     }
 
-    private void popTask() {
-        Deque<String> ids = TASK_IDS.get();
-        ids.poll();
-        if (ids.isEmpty()) {
-            TASK_IDS.remove();
+    private static PSDCMSPlatformNodeDTO requireNode(Object node) {
+        if (!(node instanceof PSDCMSPlatformNodeDTO)) {
+            throw new IllegalArgumentException("Expected PSDCMSPlatformNodeDTO");
         }
+        return (PSDCMSPlatformNodeDTO) node;
     }
 
     private String taskName(String action, Object value) {

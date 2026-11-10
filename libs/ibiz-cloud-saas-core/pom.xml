@@ -18,10 +18,16 @@
 
 	<dependencies>
 	
-		<dependency>
+        <dependency>
             <groupId>cn.ibizlab.plugin</groupId>
             <artifactId>ibiz-cloud-core</artifactId>
             <version>8.1.0.584.1</version>
+        </dependency>
+
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter</artifactId>
+            <scope>test</scope>
         </dependency>
 
     </dependencies>

@@ -132,6 +132,13 @@ public class AuthInfo implements Serializable {
     @ApiModelProperty(value = "状态", position = 16)
     private String status;
 
+    /**
+     * 会话参数
+     */
+    @JsonProperty("session_params")
+    @ApiModelProperty(value = "会话参数", position = 17)
+    private Map<String, Object> sessionParams;
+
 
     public String getStatus() {
         return status;
@@ -139,6 +146,14 @@ public class AuthInfo implements Serializable {
 
     public void setStatus(String status) {
         this.status = status;
+    }
+
+    public Map<String, Object> getSessionParams() {
+        return sessionParams;
+    }
+
+    public void setSessionParams(Map<String, Object> sessionParams) {
+        this.sessionParams = sessionParams;
     }
 
     /**

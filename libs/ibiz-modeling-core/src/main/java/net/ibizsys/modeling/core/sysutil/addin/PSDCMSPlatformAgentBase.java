@@ -19,6 +19,10 @@ import net.ibizsys.central.cloud.core.util.ConfigEntity;
 import net.ibizsys.central.cloud.core.util.IConfigEntity;
 import net.ibizsys.modeling.core.addin.IPSDCClusterAgent;
 import net.ibizsys.modeling.core.addin.IPSDCMSPlatformAgent;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCMSPlatformDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCMSPlatformNodeDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCRegistryItemDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDevSlnMSDeployDTO;
 import net.ibizsys.modeling.core.sysutil.IClusterSysUtilRuntime;
 import net.ibizsys.runtime.IModelRuntime;
 import net.ibizsys.runtime.ISystemRuntimeBase;
@@ -44,6 +48,51 @@ public abstract class PSDCMSPlatformAgentBase extends MSPlatformSysUtilRTAddinBa
 
     @Autowired(required = false)
     private IClusterSysUtilRuntime clusterSysUtilRuntime;
+
+    @Override
+    protected PSDCMSPlatformDTO getAddinData() {
+        return (PSDCMSPlatformDTO) super.getAddinData();
+    }
+
+    @Override
+    public String getServiceName(Object platformNode) {
+        return getServiceName((PSDCMSPlatformNodeDTO) platformNode);
+    }
+
+    public String getServiceName(PSDCMSPlatformNodeDTO platformNode) {
+        return platformNode.getPSDCMSPlatformNodeName();
+    }
+
+    @Override
+    public String getAlias(Object platformNode) {
+        return getAlias((PSDCMSPlatformNodeDTO) platformNode);
+    }
+
+    public String getAlias(PSDCMSPlatformNodeDTO platformNode) {
+        return platformNode.getPSDCMSPlatformNodeName();
+    }
+
+    @Override
+    public List<String> getEnvironments(Object platformNode, Object registryItem) {
+        return getEnvironments((PSDCMSPlatformNodeDTO) platformNode,
+                (PSDCRegistryItemDTO) registryItem);
+    }
+
+    public List<String> getEnvironments(PSDCMSPlatformNodeDTO platformNode,
+            PSDCRegistryItemDTO registryItem) {
+        return new ArrayList<>();
+    }
+
+    @Override
+    public List<String> getHostAliases(Object platformNode, Object registryItem) {
+        return getHostAliases((PSDCMSPlatformNodeDTO) platformNode,
+                (PSDCRegistryItemDTO) registryItem);
+    }
+
+    public List<String> getHostAliases(PSDCMSPlatformNodeDTO platformNode,
+            PSDCRegistryItemDTO registryItem) {
+        return new ArrayList<>();
+    }
 
     @Override
     protected void onInit() throws Exception {
@@ -240,6 +289,15 @@ public abstract class PSDCMSPlatformAgentBase extends MSPlatformSysUtilRTAddinBa
 
     protected void onPublishConfig(Object deployment, Map<String, Object> params)
             throws Throwable {
+        if (deployment instanceof PSDevSlnMSDeployDTO) {
+            onPublishConfig((PSDevSlnMSDeployDTO) deployment, params);
+            return;
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected void onPublishConfig(PSDevSlnMSDeployDTO deployment,
+            Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 

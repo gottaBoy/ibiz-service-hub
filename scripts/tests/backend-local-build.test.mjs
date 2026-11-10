@@ -150,6 +150,20 @@ test('reactor versions and boot entrypoints are aligned', () => {
   assert.match(gatewayPom, /net\.ibizsys\.ebsx\.gateway\.boot\.EBSXGatewayApplication/);
 });
 
+test('allinone registers the legacy UAA REST controllers', () => {
+  const source = read(resolve(
+    serviceHubRoot,
+    'ibiz-ebsx-runtime/src/main/java/net/ibizsys/ebsx/allinone/boot/EBSXAllInOneApplication.java',
+  ));
+  const controller = read(resolve(
+    serviceHubRoot,
+    'libs/ibiz-cloud-uaa-core/src/main/java/net/ibizsys/central/cloud/uaa/core/spring/controller/UAARestController.java',
+  ));
+
+  assert.match(source, /"net\.ibizsys\.central\.cloud\.uaa\.core\.spring"/);
+  assert.match(controller, /@GetMapping\(value = "\/uaa\/getbydcsystem\/\{srfdcsystem\}"\)/);
+});
+
 test('local Dockerfiles contain only third-party Java bases and deterministic artifacts', () => {
   const dockerfiles = [
     [

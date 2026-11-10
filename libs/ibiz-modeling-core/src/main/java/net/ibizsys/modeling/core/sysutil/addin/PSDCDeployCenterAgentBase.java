@@ -10,6 +10,10 @@ import java.util.UUID;
 import org.springframework.util.StringUtils;
 
 import net.ibizsys.modeling.core.addin.IPSDCDeployCenterAgent;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCDeployCenterDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCMSPlatformDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCMSPlatformNodeDTO;
+import net.ibizsys.modeling.core.dataentity.dto.PSDevSlnPipelineDTO;
 import net.ibizsys.runtime.IModelRuntime;
 import net.ibizsys.runtime.ISystemRuntimeBase;
 import net.ibizsys.runtime.SystemRuntimeException;
@@ -17,9 +21,8 @@ import net.ibizsys.runtime.SystemRuntimeException;
 /**
  * Common base implementation for deploy-center agents.
  *
- * <p>The add-in data is intentionally kept as an object. This allows the core
- * module to work with the optional modeling DTO module without a hard source
- * dependency on its generated classes.</p>
+ * <p>The add-in data is a deploy-center DTO so static Groovy extensions can
+ * access its configuration fields.</p>
  */
 public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAddinBase
         implements IPSDCDeployCenterAgent {
@@ -32,6 +35,11 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
             ThreadLocal.withInitial(ArrayDeque::new);
 
     private String serviceUrl;
+
+    @Override
+    protected PSDCDeployCenterDTO getAddinData() {
+        return (PSDCDeployCenterDTO) super.getAddinData();
+    }
 
     @Override
     protected void onInit() throws Exception {
@@ -105,6 +113,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
 
     protected Object onRestartPSDCMSPlatformNode(Object platformNode,
             Map<String, Object> params) throws Throwable {
+        if (platformNode instanceof PSDCMSPlatformNodeDTO) {
+            return onRestartPSDCMSPlatformNode((PSDCMSPlatformNodeDTO) platformNode, params);
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected Object onRestartPSDCMSPlatformNode(PSDCMSPlatformNodeDTO platformNode,
+            Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -151,6 +167,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
     }
 
     protected Object onAddPSDCMSPlatformNode(Object platformNode) throws Throwable {
+        if (platformNode instanceof PSDCMSPlatformNodeDTO) {
+            return onAddPSDCMSPlatformNode((PSDCMSPlatformNodeDTO) platformNode);
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected Object onAddPSDCMSPlatformNode(PSDCMSPlatformNodeDTO platformNode)
+            throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -185,6 +209,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
 
     protected Object onPublishPSDevSlnPipeline(Object pipeline,
             Map<String, Object> params) throws Throwable {
+        if (pipeline instanceof PSDevSlnPipelineDTO) {
+            return onPublishPSDevSlnPipeline((PSDevSlnPipelineDTO) pipeline, params);
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected Object onPublishPSDevSlnPipeline(PSDevSlnPipelineDTO pipeline,
+            Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
 
@@ -198,6 +230,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
     }
 
     protected Object onBuildPSDevSlnPipeline(Object pipeline,
+            Map<String, Object> params) throws Throwable {
+        if (pipeline instanceof PSDevSlnPipelineDTO) {
+            return onBuildPSDevSlnPipeline((PSDevSlnPipelineDTO) pipeline, params);
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected Object onBuildPSDevSlnPipeline(PSDevSlnPipelineDTO pipeline,
             Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
@@ -213,6 +253,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
     }
 
     protected Map<String, Object> onGetPSDevSlnPipelineConfig(Object pipeline,
+            Map<String, Object> params) throws Throwable {
+        if (pipeline instanceof PSDevSlnPipelineDTO) {
+            return onGetPSDevSlnPipelineConfig((PSDevSlnPipelineDTO) pipeline, params);
+        }
+        throw new Exception("没有实现");
+    }
+
+    public Map<String, Object> onGetPSDevSlnPipelineConfig(PSDevSlnPipelineDTO pipeline,
             Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }
@@ -266,6 +314,14 @@ public abstract class PSDCDeployCenterAgentBase extends DeployCenterSysUtilRTAdd
     }
 
     protected Object onPublishPSDCMSPlatform(Object platform,
+            Map<String, Object> params) throws Throwable {
+        if (platform instanceof PSDCMSPlatformDTO) {
+            return onPublishPSDCMSPlatform((PSDCMSPlatformDTO) platform, params);
+        }
+        throw new Exception("没有实现");
+    }
+
+    protected Object onPublishPSDCMSPlatform(PSDCMSPlatformDTO platform,
             Map<String, Object> params) throws Throwable {
         throw new Exception("没有实现");
     }

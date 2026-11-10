@@ -723,21 +723,13 @@ public abstract class CloudSaaSUtilRuntimeBase extends CloudUtilRuntimeBase impl
 	
 	@Override
 	public Config getConfig(String strConfigType, String strTargetType, boolean bTryMode, boolean bTryGlobal) {
-		
-		IEmployeeContext iEmployeeContext = EmployeeContext.getCurrentMust();
-		String strToken = AuthenticationUser.getCurrentMust().getToken();
+		EmployeeContext.getCurrentMust();
+		AuthenticationUser.getCurrentMust();
 		return this.executeAction("获取用户配置", new IAction() {
 			@Override
 			public Object execute(Object[] args) throws Throwable {
-				return new CacheableActionBuilder(getSysCacheUtilRuntime(), CloudCacheTagUtils.getCloudDataCat(iEmployeeContext.getTenant(), iEmployeeContext.getUserid(), Config.class.getSimpleName()))
-						.tags(iEmployeeContext.getSystemid(), KeyValueUtils.genUniqueId(strToken), strConfigType, strTargetType)
-						.expire(7200)
-						.action(new IAction() {
-							@Override
-							public Object execute(Object[] args) throws Throwable {
-								return onGetConfig(strConfigType, strTargetType, bTryMode, bTryGlobal);
-							}
-						}).build().get(Config.class);
+				// Mutable user configs must reflect writes across sessions and share modes.
+				return onGetConfig(strConfigType, strTargetType, bTryMode, bTryGlobal);
 			}
 		}, null, Config.class);
 		
@@ -752,6 +744,8 @@ public abstract class CloudSaaSUtilRuntimeBase extends CloudUtilRuntimeBase impl
 	}
 	@Override
 	public Config saveConfig(String strConfigType, String strTargetType, Object objConfig, boolean bAsGlobal) {
+		EmployeeContext.getCurrentMust();
+		AuthenticationUser.getCurrentMust();
 		return this.executeAction("保存配置", new IAction() {
 			@Override
 			public Object execute(Object[] args) throws Throwable {
@@ -767,6 +761,8 @@ public abstract class CloudSaaSUtilRuntimeBase extends CloudUtilRuntimeBase impl
 	
 	@Override
 	public void removeConfig(String strConfigType, String strTargetType) {
+		EmployeeContext.getCurrentMust();
+		AuthenticationUser.getCurrentMust();
 		this.executeAction("移除配置", new IAction() {
 			@Override
 			public Object execute(Object[] args) throws Throwable {

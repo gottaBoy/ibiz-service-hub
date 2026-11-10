@@ -2,6 +2,7 @@ package net.ibizsys.modeling.core.database;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,9 @@ import org.springframework.util.StringUtils;
 import net.ibizsys.central.cloud.core.database.SysDBSchemeRuntimeBase;
 import net.ibizsys.central.cloud.core.spring.rt.ServiceHub;
 import net.ibizsys.central.cloud.core.util.domain.DataSource;
+import net.ibizsys.modeling.core.dataentity.dto.PSSysModelInstDTO;
+import net.ibizsys.modeling.core.dataentity.service.IPSDevSlnSysService;
+import net.ibizsys.modeling.core.dataentity.service.IPSSysModelInstService;
 import net.ibizsys.modeling.core.security.IPSDevSysUser;
 import net.ibizsys.modeling.core.util.PSDevSysUserHolder;
 import net.ibizsys.runtime.util.ActionSession;
@@ -22,10 +26,8 @@ import net.ibizsys.runtime.util.KeyValueUtils;
 /**
  * Database runtime used by the model repository.
  *
- * <p>The model repository service and DTO modules are optional at this layer.
- * Service references are therefore resolved as objects and invoked through a
- * small, explicit reflection adapter. This keeps the core module independent
- * while retaining the service contract used by the full modeling runtime.</p>
+ * <p>Repository services use typed injection. Explicit object adapters remain
+ * available for custom repositories and select compatible public overloads.</p>
  */
 public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase {
 
@@ -35,7 +37,10 @@ public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase
     private final Map<String, String> psDevSlnSysDSTagMap = new HashMap<>();
 
     @Autowired(required = false)
-    private List<Object> modelRepositoryServices;
+    private IPSDevSlnSysService iPSDevSlnSysService;
+
+    @Autowired(required = false)
+    private IPSSysModelInstService iPSSysModelInstService;
 
     private Object psDevSlnSysService;
     private Object psSysModelInstService;
@@ -137,9 +142,17 @@ public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase
 
     protected String registerDataSource(Object modelInst) {
         DataSource dataSource = new DataSource();
-        this.fillDataSource(dataSource, modelInst);
+        if (modelInst instanceof PSSysModelInstDTO) {
+            this.fillDataSource(dataSource, (PSSysModelInstDTO) modelInst);
+        } else {
+            this.fillDataSource(dataSource, modelInst);
+        }
         ServiceHub.getInstance().registerDynaDataSourceIf(this.getSystemRuntime(), dataSource);
         return dataSource.getDataSourceId();
+    }
+
+    protected void fillDataSource(DataSource dataSource, PSSysModelInstDTO modelInst) {
+        fillDataSource(dataSource, (Object) modelInst);
     }
 
     protected void fillDataSource(DataSource dataSource, Object modelInst) {
@@ -198,27 +211,18 @@ public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase
     private Object getService(Object configuredService, String interfaceName,
             String methodName, Object... args) throws Exception {
         Object service = configuredService;
-        if (service == null && modelRepositoryServices != null) {
-            for (Object candidate : modelRepositoryServices) {
-                if (candidate == null) {
-                    continue;
-                }
-                for (Class<?> candidateInterface : candidate.getClass().getInterfaces()) {
-                    if (candidateInterface.getSimpleName().equals(interfaceName)) {
-                        service = candidate;
-                        break;
-                    }
-                }
-                if (service != null) {
-                    break;
-                }
+        if (service == null) {
+            if ("IPSDevSlnSysService".equals(interfaceName)) {
+                service = iPSDevSlnSysService;
+            } else if ("IPSSysModelInstService".equals(interfaceName)) {
+                service = iPSSysModelInstService;
             }
         }
         if (service == null) {
             throw new Exception(String.format("模型服务[%s]未注入", interfaceName));
         }
         try {
-            Method method = findMethod(service.getClass(), methodName, args.length);
+            Method method = findMethod(service.getClass(), methodName, args);
             if (method == null) {
                 throw new Exception(String.format("模型服务[%s]未提供方法[%s]", interfaceName, methodName));
             }
@@ -232,19 +236,76 @@ public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase
         }
     }
 
-    private static Method findMethod(Class<?> type, String name, int parameterCount) {
-        for (Class<?> current = type; current != null; current = current.getSuperclass()) {
-            for (Method method : current.getDeclaredMethods()) {
-                if (method.getName().equals(name)
-                        && method.getParameterCount() == parameterCount) {
-                    if (!method.isAccessible()) {
-                        method.setAccessible(true);
-                    }
-                    return method;
+    private static Method findMethod(Class<?> type, String name, Object... args)
+            throws NoSuchMethodException {
+        List<Method> candidates = new ArrayList<>();
+        for (Method method : type.getMethods()) {
+            if (!method.getName().equals(name) || method.isBridge() || method.isSynthetic()
+                    || method.getParameterCount() != args.length) {
+                continue;
+            }
+            Class<?>[] parameters = method.getParameterTypes();
+            boolean matches = true;
+            for (int index = 0; index < parameters.length; index++) {
+                if (args[index] == null ? parameters[index].isPrimitive()
+                        : !boxed(parameters[index]).isInstance(args[index])) {
+                    matches = false;
+                    break;
                 }
             }
+            if (!matches) {
+                continue;
+            }
+            candidates.add(method);
+        }
+        Method selected = selectMethod(candidates, name);
+        if (selected != null) {
+            selected.setAccessible(true);
+        }
+        return selected;
+    }
+
+    private static Method selectMethod(List<Method> candidates, String name)
+            throws NoSuchMethodException {
+        // Inspect every applicable signature before rejecting incomparable overloads.
+        for (Method candidate : candidates) {
+            boolean mostSpecific = true;
+            for (Method other : candidates) {
+                if (!moreSpecific(candidate.getParameterTypes(), other.getParameterTypes())) {
+                    mostSpecific = false;
+                    break;
+                }
+            }
+            if (mostSpecific) {
+                return candidate;
+            }
+        }
+        if (!candidates.isEmpty()) {
+            throw new NoSuchMethodException("Ambiguous model service method: " + name);
         }
         return null;
+    }
+
+    private static boolean moreSpecific(Class<?>[] candidate, Class<?>[] other) {
+        for (int index = 0; index < candidate.length; index++) {
+            if (!boxed(other[index]).isAssignableFrom(boxed(candidate[index]))) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    private static Class<?> boxed(Class<?> type) {
+        if (!type.isPrimitive()) return type;
+        if (type == boolean.class) return Boolean.class;
+        if (type == int.class) return Integer.class;
+        if (type == long.class) return Long.class;
+        if (type == double.class) return Double.class;
+        if (type == float.class) return Float.class;
+        if (type == short.class) return Short.class;
+        if (type == byte.class) return Byte.class;
+        if (type == char.class) return Character.class;
+        return Void.class;
     }
 
     private static Object readProperty(Object target, String methodName) {
@@ -252,7 +313,7 @@ public abstract class ModelSysDBSchemeRuntimeBase extends SysDBSchemeRuntimeBase
             return null;
         }
         try {
-            Method method = findMethod(target.getClass(), methodName, 0);
+            Method method = findMethod(target.getClass(), methodName);
             return method == null ? null : method.invoke(target);
         } catch (ReflectiveOperationException ex) {
             return null;

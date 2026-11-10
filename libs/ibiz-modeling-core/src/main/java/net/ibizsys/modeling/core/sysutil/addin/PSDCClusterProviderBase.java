@@ -1,17 +1,22 @@
 package net.ibizsys.modeling.core.sysutil.addin;
 
-import net.ibizsys.central.cloud.core.addin.SysUtilRTAddinBase;
-import net.ibizsys.central.sysutil.ISysUtilRuntime;
+import net.ibizsys.modeling.core.addin.IPSDCClusterAgent;
 import net.ibizsys.modeling.core.addin.IPSDCClusterProvider;
+import net.ibizsys.modeling.core.dataentity.dto.PSDCClusterDTO;
 
 /**
  * Base class for deploy-center cluster providers.
  */
-public abstract class PSDCClusterProviderBase extends SysUtilRTAddinBase
+public abstract class PSDCClusterProviderBase extends ClusterSysUtilRTAddinBase
         implements IPSDCClusterProvider {
 
     @Override
-    protected ISysUtilRuntime getSysUtilRuntime() {
-        return (ISysUtilRuntime) getContext().getModelRuntime();
+    public IPSDCClusterAgent createPSDCClusterAgent(Object cluster) {
+        if (!(cluster instanceof PSDCClusterDTO)) {
+            throw new IllegalArgumentException("Expected PSDCClusterDTO");
+        }
+        return createPSDCClusterAgent((PSDCClusterDTO) cluster);
     }
+
+    public abstract IPSDCClusterAgent createPSDCClusterAgent(PSDCClusterDTO cluster);
 }

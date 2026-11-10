@@ -16,12 +16,8 @@ import net.ibizsys.modeling.core.dataentity.service.IPSModuleService;
 import net.ibizsys.modeling.core.dataentity.service.IPSSystemService;
 import net.ibizsys.modeling.core.security.IPSDevSysUser;
 import net.ibizsys.modeling.core.security.ISystemAccessManager;
-import net.ibizsys.modeling.core.util.PSDevSysUserHolder;
 import net.ibizsys.runtime.util.ActionSession;
 import net.ibizsys.runtime.util.ActionSessionManager;
-import net.ibizsys.runtime.util.IAppContext;
-import org.apache.commons.logging.Log;
-import org.apache.commons.logging.LogFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.util.ObjectUtils;
@@ -29,7 +25,6 @@ import org.springframework.util.StringUtils;
 
 public abstract class ModelSysUtilRTAddinBase
 extends SysUtilRTAddinBase {
-    private static final Log log = LogFactory.getLog(ModelSysUtilRTAddinBase.class);
     @Autowired
     private IPSModuleService iPSModuleService = null;
     @Autowired
@@ -110,50 +105,14 @@ extends SysUtilRTAddinBase {
     }
 
     protected IPSDevSysUser getCurrentPSDevSysUser(boolean bTryMode) throws Exception {
-        Object item;
-        IPSDevSysUser iPSDevSysUser = PSDevSysUserHolder.peek();
-        if (iPSDevSysUser != null) {
-            return iPSDevSysUser;
-        }
-        IAppContext iAppContext = ActionSessionManager.getAppContext();
-        if (iAppContext == null) {
-            if (bTryMode) {
-                return null;
-            }
-            throw new Exception("\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548");
-        }
-        String strPSDevSlnSysId = (String)iAppContext.get("PSDEVSLNSYS");
-        if (!StringUtils.hasLength((String)strPSDevSlnSysId)) {
-            if (bTryMode) {
-                return null;
-            }
-            throw new Exception("\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6");
-        }
-        ActionSession actionSession = ActionSessionManager.getCurrentSession();
-        String strCacheTag = String.format("CACHE_%s_%s", strPSDevSlnSysId, IPSDevSysUser.class);
-        if (actionSession != null && (item = actionSession.getActionParam(strCacheTag)) != null) {
-            return (IPSDevSysUser)item;
-        }
-        iPSDevSysUser = (IPSDevSysUser)((ISystemAccessManager)this.getSystemRuntime().getSystemAccessManager()).getPSDevUserBase("SYS", strPSDevSlnSysId);
-        if (iPSDevSysUser == null) {
-            throw new Exception(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u7cfb\u7edf[%1$s]\u8bbf\u95ee\u7528\u6237\u5bf9\u8c61", strPSDevSlnSysId));
-        }
-        if (actionSession != null) {
-            actionSession.setActionParam(strCacheTag, (Object)iPSDevSysUser);
-        }
-        return iPSDevSysUser;
+        return ((ISystemAccessManager)this.getSystemRuntime().getSystemAccessManager())
+                .getCurrentPSDevSysUser(bTryMode);
     }
 
     protected String getCurrentPSDevSlnSysId() throws Exception {
-        IPSDevSysUser iPSDevSysUser = PSDevSysUserHolder.peek();
-        if (iPSDevSysUser != null) {
-            return iPSDevSysUser.getPSDevSlnSysId();
-        }
-        IAppContext iAppContext = ActionSessionManager.getAppContext();
-        if (iAppContext == null) {
-            throw new Exception("\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548");
-        }
-        String strPSDevSlnSysId = (String)iAppContext.get("PSDEVSLNSYS");
+        IPSDevSysUser iPSDevSysUser = this.getCurrentPSDevSysUser(false);
+        String strPSDevSlnSysId = iPSDevSysUser == null
+                ? null : iPSDevSysUser.getPSDevSlnSysId();
         if (!StringUtils.hasLength((String)strPSDevSlnSysId)) {
             throw new Exception("\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6");
         }

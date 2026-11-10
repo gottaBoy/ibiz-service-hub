@@ -115,6 +115,9 @@ public class WebFluxClient extends WebClientBase {
 
 	@Override
 	protected <T> IWebClientRep<T> onGet(String strUri, Map<String, ?> uriParams, Map<String, ?> headers, Map<String, ?> queries, Class<T> cls, Object objTag) throws Throwable {
+		final boolean refreshRequest = ("auths/{refresh_token}/refresh_token".equals(strUri)
+				|| "/auths/{refresh_token}/refresh_token".equals(strUri))
+				&& uriParams != null && uriParams.containsKey("refresh_token");
 		try {
 			if (queries != null) {
 				String strQueryParam = getUrlParams(queries, false);
@@ -157,6 +160,15 @@ public class WebFluxClient extends WebClientBase {
 
 			return new WebClientRep<T>(entity.getBody(), (entity.getHeaders() == null) ? null : entity.getHeaders());
 		} catch (Throwable ex) {
+			if (refreshRequest) {
+				// WebClientBase logs this exception before the UAA runtime receives it.
+				if (ex instanceof WebClientResponseException) {
+					throw new SubSysServiceAPIRuntimeException(this.getSystemRuntime(), this.getSubSysServiceAPIRuntime(),
+							((WebClientResponseException) ex).getRawStatusCode(), "Refresh service request failed", null);
+				}
+				throw new SystemRuntimeException(this.getSystemRuntime(), this.getSubSysServiceAPIRuntime(),
+						"Refresh service request failed (" + ex.getClass().getSimpleName() + ")");
+			}
 			if (ex instanceof WebClientResponseException) {
 				WebClientResponseException webClientResponseException = (WebClientResponseException) ex;
 

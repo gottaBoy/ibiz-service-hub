@@ -101,7 +101,7 @@ public class RTAuthAgent extends AuthAgentBase implements IHttpAuthAgent {
                 RTAuthenticationUser authenticationUser = new RTAuthenticationUser();
                 authenticationUser.setUserid(authLoginResponse.getUser().getId());
                 authenticationUser.setUsername(authLoginResponse.getUser().getUsername());
-                authenticationUser.setDc(authLoginResponse.getUser().getDc());
+                authenticationUser.setDc(resolveDc(authLoginResponse.getUser()));
                 authenticationUser.setLoginname(username);
                 authenticationUser.setPersonname(authLoginResponse.getUser().getDisplayName());
                 authenticationUser.setEmail(authLoginResponse.getUser().getMail());
@@ -231,7 +231,7 @@ public class RTAuthAgent extends AuthAgentBase implements IHttpAuthAgent {
         RTAuthenticationUser authenticationUser = new RTAuthenticationUser();
         authenticationUser.setUserid(authLoginResponse.getUser().getId());
         authenticationUser.setUsername(authLoginResponse.getUser().getUsername());
-        authenticationUser.setDc(authLoginResponse.getUser().getDc());
+        authenticationUser.setDc(resolveDc(authLoginResponse.getUser()));
         authenticationUser.setLoginname(username);
         authenticationUser.setPersonname(authLoginResponse.getUser().getDisplayName());
         authenticationUser.setEmail(authLoginResponse.getUser().getMail());
@@ -263,6 +263,27 @@ public class RTAuthAgent extends AuthAgentBase implements IHttpAuthAgent {
             }
         }
         return authenticationUser;
+    }
+
+    private static String resolveDc(AuthInfo user) {
+        if (user == null) {
+            return null;
+        }
+        if (StringUtils.hasLength(user.getDc())) {
+            return user.getDc();
+        }
+        Map<String, Object> sessionParams = user.getSessionParams();
+        if (sessionParams != null) {
+            Object dc = sessionParams.get("dc");
+            if (dc instanceof String && StringUtils.hasLength((String) dc)) {
+                return (String) dc;
+            }
+            dc = sessionParams.get("srfdcid");
+            if (dc instanceof String && StringUtils.hasLength((String) dc)) {
+                return (String) dc;
+            }
+        }
+        return null;
     }
 
     @Override

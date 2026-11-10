@@ -28,6 +28,8 @@ public class JWTSysUAAUtilRuntime extends SysUAAUtilRuntimeBase {
 
 	public final static String NEWRT_UAASERVICE_SIGNATUREKEY_URL = "lb://uaa-api/auths/signaturekey";
 
+	protected static final long PUBLIC_KEY_TTL_MILLIS = 5 * 60 * 1000L;
+	protected static final long PUBLIC_KEY_REFRESH_THROTTLE_MILLIS = 5 * 1000L;
 
 	protected static final String SIGNATURE_RSA = "RSA";
 	protected static final String SIGNATURE_MAC = "MAC";
@@ -44,8 +46,10 @@ public class JWTSysUAAUtilRuntime extends SysUAAUtilRuntimeBase {
 	private String signature;
 
 	private boolean enableNewRTUAA = false;
-	
+
 	private String publicKeyString = null;
+	private long publicKeyLoadedAtMillis = 0L;
+	private long publicKeyRefreshFailedAtMillis = 0L;
 
 	protected String getSecret() {
 		return secret;
@@ -175,20 +179,25 @@ public class JWTSysUAAUtilRuntime extends SysUAAUtilRuntimeBase {
      * @param token
      * @param iAuthenticationUser
      * @return
-     */
+    */
     protected boolean validateTokenByRSA(String token, IAuthenticationUser iAuthenticationUser) throws Throwable {
-    	 String signatureKey = getPublicKeyString();
-         Date now = new Date();
-         RSAKey publicJWK = RSAKey.parse(signatureKey);
-         JWSVerifier verifier = new RSASSAVerifier(publicJWK);
-         SignedJWT signedJWT = SignedJWT.parse(token);
-         JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
-         if (!signedJWT.verify(verifier))
-             return false;
-         if (now.after(claimsSet.getExpirationTime()))
-             throw new Exception(String.format("访问令牌已过期，令牌有效期为[%1$s]，当前时间为[%2$s]", claimsSet.getExpirationTime(), now));
+        String signatureKey = getPublicKeyString();
+        if (!verifyTokenByRSA(token, signatureKey)) {
+            String refreshedSignatureKey = this.refreshPublicKeyString();
+            if (refreshedSignatureKey == null || refreshedSignatureKey.contentEquals(signatureKey)
+                    || !this.verifyTokenByRSA(token, refreshedSignatureKey)) {
+                return false;
+            }
+            signatureKey = refreshedSignatureKey;
+        }
 
-         return true;
+        Date now = this.clock.now();
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        JWTClaimsSet claimsSet = signedJWT.getJWTClaimsSet();
+        if (now.after(claimsSet.getExpirationTime()))
+            throw new Exception(String.format("访问令牌已过期，令牌有效期为[%1$s]，当前时间为[%2$s]", claimsSet.getExpirationTime(), now));
+
+        return true;
     }
     
     @Override
@@ -197,9 +206,39 @@ public class JWTSysUAAUtilRuntime extends SysUAAUtilRuntimeBase {
     		return super.getPublicKeyString();
     	}
     	
-    	if(StringUtils.hasLength(this.publicKeyString)) {
-			return this.publicKeyString;
-		}
+        if(StringUtils.hasLength(this.publicKeyString)) {
+            long now = this.clock.now().getTime();
+            if (now - this.publicKeyLoadedAtMillis < PUBLIC_KEY_TTL_MILLIS) {
+                return this.publicKeyString;
+            }
+        }
+
+		return this.refreshPublicKeyString();
+    }
+
+    protected String refreshPublicKeyString() throws Throwable {
+        synchronized (this) {
+            long now = this.clock.now().getTime();
+            if (StringUtils.hasLength(this.publicKeyString)
+                    && now - this.publicKeyRefreshFailedAtMillis < PUBLIC_KEY_REFRESH_THROTTLE_MILLIS) {
+                return this.publicKeyString;
+            }
+
+            try {
+                String signatureKey = this.fetchPublicKeyString();
+                this.publicKeyString = signatureKey;
+                this.publicKeyLoadedAtMillis = now;
+                this.publicKeyRefreshFailedAtMillis = 0L;
+                return this.publicKeyString;
+            }
+            catch (Throwable ex) {
+                this.publicKeyRefreshFailedAtMillis = now;
+                throw ex;
+            }
+        }
+    }
+
+    protected String fetchPublicKeyString() throws Throwable {
     	
     	try {
     		IWebClientRep<String> rep = this.getSystemRuntime().getDefaultWebClient().get(NEWRT_UAASERVICE_SIGNATUREKEY_URL);
@@ -207,11 +246,17 @@ public class JWTSysUAAUtilRuntime extends SysUAAUtilRuntimeBase {
     			throw new Exception("返回值无效");
     		}
     		
-    		this.publicKeyString = rep.getBody();
-    		return this.publicKeyString;
+            return rep.getBody();
     	}
     	catch (Throwable ex) {
     		throw new Exception(String.format("请求签名密钥发生异常，%1$s", ex.getMessage()), ex);
 		}
+    }
+
+    protected boolean verifyTokenByRSA(String token, String signatureKey) throws Throwable {
+        RSAKey publicJWK = RSAKey.parse(signatureKey);
+        JWSVerifier verifier = new RSASSAVerifier(publicJWK);
+        SignedJWT signedJWT = SignedJWT.parse(token);
+        return signedJWT.verify(verifier);
     }
 }

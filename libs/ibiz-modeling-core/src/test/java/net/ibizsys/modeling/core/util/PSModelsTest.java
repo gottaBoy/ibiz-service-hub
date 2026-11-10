@@ -13,6 +13,12 @@ class PSModelsTest {
         assertTrue(PSModels.isModelInstDataEntity(PSModels.PSDEFORM));
         assertEquals("T_SRFPSDEFORM", PSModels.getModelInstDataEntityTable(PSModels.PSDEFORM));
 
+        assertTrue(PSModels.isModelInstDataEntity(PSModels.PSMODULE));
+        assertEquals("T_SRFPSMODULE", PSModels.getModelInstDataEntityTable(PSModels.PSMODULE));
+
+        assertTrue(PSModels.isModelInstDataEntity(PSModels.PSDATAENTITY));
+        assertEquals("T_SRFPSDATAENTITY", PSModels.getModelInstDataEntityTable(PSModels.PSDATAENTITY));
+
         assertTrue(PSModels.isConfigInstDataEntity(PSModels.PSDBTYPE));
         assertEquals("T_SRFPSDBTYPE", PSModels.getConfigInstDataEntityTable(PSModels.PSDBTYPE));
 

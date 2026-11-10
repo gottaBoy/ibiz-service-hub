@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-09-29T04:04:30Z",
+  "source": {
+    "root": "/home/my/workspace/ainfra/aibiz/ibiz-service-hub",
+    "sha256": "d49928632045b5d9b152d847552aa62b637f6211ddea16ac6c7fc343f4dbd8bd",
+    "git_commit": "5ffc8077ebb4c4192f43245d0f5ce5201b91008f",
+    "git_dirty": true
+  },
+  "reactor": {
+    "version": "8.1.0.584.1",
+    "runtime_version": "8.1.0.584.1",
+    "gateway_version": "8.1.0.584.1"
+  },
+  "build": {
+    "platform": "linux/arm64",
+    "architecture": "arm64",
+    "maven": {
+      "requested": "maven:3.9-eclipse-temurin-17",
+      "resolved": "maven@sha256:42a3ac393abbc64dae6c96703e5ead2e921fe9103371ac58b5b404b0d6a26502",
+      "image_id": "sha256:f0be3f7442b426f4bc8238fcb0fc5545be96d3266511aed07f767fd51b78a09e"
+    },
+    "java": {
+      "requested": "eclipse-temurin:17-jdk",
+      "resolved": "eclipse-temurin@sha256:bc033b57e11b773c3043babfd664e7a5ef110805548b921cbfc3e8c67a0725d6",
+      "image_id": "sha256:42ec2338f05fe160e6885cc5d245e8eada367f3954f41a8fb7adbebc0e473bb4"
+    },
+    "command": "scripts/build-local-images.sh --platform linux/arm64 --tag 8.1.0.584.1-local-current-20260929"
+  },
+  "artifacts": {
+    "allinone": {
+      "path": "ibiz-ebsx-runtime/ibiz-ebsx-allinone-rt.jar",
+      "sha256": "42e55444b469014c25eb834b69f4b17a63ef7ee28c6e58e559509e5070139d60"
+    },
+    "gateway": {
+      "path": "ibiz-ebsx-gateway/ibiz-ebsx-gateway.jar",
+      "sha256": "7b198745cbd0755abce21482028c29a4dfecc8f9bcfac3359acd09bb241cf5be"
+    }
+  },
+  "images": {
+    "prefix": "aibiz",
+    "tag": "8.1.0.584.1-local-current-20260929",
+    "allinone": {
+      "reference": "aibiz/ibiz-ebsx-allinone-rt:8.1.0.584.1-local-current-20260929",
+      "image_id": "sha256:0e34841f50e9e05d8f49723ff04ae888075828592c87245900f6619537d56da0",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    },
+    "gateway": {
+      "reference": "aibiz/ibiz-ebsx-gateway:8.1.0.584.1-local-current-20260929",
+      "image_id": "sha256:e96737b49c54dde95930a43148b269f41927e39a451ee009b73d838cc4fbb516",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    }
+  }
+}

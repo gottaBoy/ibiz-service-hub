@@ -27,6 +27,7 @@ import org.springframework.context.annotation.ComponentScan;
         , "net.ibizsys.central.plugin.liquibase.spring"
         , "net.ibizsys.central.cloud.report.core.spring"
         , "net.ibizsys.central.cloud.portal.core.spring"
+        , "net.ibizsys.central.cloud.uaa.core.spring"
         , "net.ibizsys.central.cloud.uaa.rabbitmq.spring"
         , "net.ibizsys.central.cloud.ai.core.spring"
         , "net.ibizsys.central.cloud.kb.core.spring"

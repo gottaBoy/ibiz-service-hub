@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "generated_at_utc": "2026-10-08T11:40:52Z",
+  "source": {
+    "root": "/home/my/workspace/ainfra/aibiz/ibiz-service-hub",
+    "sha256": "c7effefe181f65c9cc902fec4e48da8fa51b2671c81b46bb147bff49e65f98fe",
+    "git_commit": "5ffc8077ebb4c4192f43245d0f5ce5201b91008f",
+    "git_dirty": true
+  },
+  "reactor": {
+    "version": "8.1.0.584.1",
+    "runtime_version": "8.1.0.584.1",
+    "gateway_version": "8.1.0.584.1"
+  },
+  "build": {
+    "platform": "linux/arm64",
+    "architecture": "arm64",
+    "maven": {
+      "requested": "maven:3.9-eclipse-temurin-17",
+      "resolved": "maven@sha256:42a3ac393abbc64dae6c96703e5ead2e921fe9103371ac58b5b404b0d6a26502",
+      "image_id": "sha256:f0be3f7442b426f4bc8238fcb0fc5545be96d3266511aed07f767fd51b78a09e"
+    },
+    "java": {
+      "requested": "eclipse-temurin:17-jdk",
+      "resolved": "eclipse-temurin@sha256:bc033b57e11b773c3043babfd664e7a5ef110805548b921cbfc3e8c67a0725d6",
+      "image_id": "sha256:42ec2338f05fe160e6885cc5d245e8eada367f3954f41a8fb7adbebc0e473bb4"
+    },
+    "command": "scripts/build-local-images.sh --platform linux/arm64 --tag 8.1.0.584.1-local-uaa-fix-20261008"
+  },
+  "artifacts": {
+    "allinone": {
+      "path": "ibiz-ebsx-runtime/ibiz-ebsx-allinone-rt.jar",
+      "sha256": "47627101783fcb77e5292d53a970e77af2cc114e8d1a48f1a30b9b358b013872"
+    },
+    "gateway": {
+      "path": "ibiz-ebsx-gateway/ibiz-ebsx-gateway.jar",
+      "sha256": "c4d08a437353e0db37f83584d5e4c2514fd8ebe575cf4902a206f7da3b85fbae"
+    }
+  },
+  "images": {
+    "prefix": "aibiz",
+    "tag": "8.1.0.584.1-local-uaa-fix-20261008",
+    "allinone": {
+      "reference": "aibiz/ibiz-ebsx-allinone-rt:8.1.0.584.1-local-uaa-fix-20261008",
+      "image_id": "sha256:ed653a7f842bd4055ab2c3fbe7dc8cfcbfb8a19fdcbd23d8483411b96b6da1ad",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    },
+    "gateway": {
+      "reference": "aibiz/ibiz-ebsx-gateway:8.1.0.584.1-local-uaa-fix-20261008",
+      "image_id": "sha256:a76548e308109fdc0975ec7d2b5856fa7818fe5a1eaa5041444d1445a3c7a6f2",
+      "repo_digests": [],
+      "platform": "linux/arm64",
+      "version_label": "8.1.0.584.1"
+    }
+  }
+}

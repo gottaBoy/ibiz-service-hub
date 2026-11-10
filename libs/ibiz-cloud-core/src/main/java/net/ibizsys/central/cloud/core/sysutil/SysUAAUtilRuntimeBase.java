@@ -17,6 +17,7 @@ import java.util.Date;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+
 import javax.servlet.ServletException;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
@@ -262,6 +263,36 @@ public abstract class SysUAAUtilRuntimeBase extends SysUtilRuntimeBase implement
 		return this.strPublicKeyString;
 	}
 
+	protected String getDcFromToken(String token) {
+		try {
+			int partCount = 0;
+			for (int i = 0; i < token.length(); i++) {
+				if (token.charAt(i) == '.') {
+					partCount++;
+				}
+			}
+			if (partCount != 2) {
+				return null;
+			}
+
+			String payload = token.substring(token.indexOf('.') + 1, token.lastIndexOf('.'));
+			byte[] payloadBytes = Base64.getUrlDecoder().decode(payload);
+			Map<String, Object> claims = JsonUtils.as(new String(payloadBytes, Charset.defaultCharset()), Map.class);
+			Object dc = claims.get("dc");
+			if (dc instanceof String && StringUtils.hasLength((String)dc)) {
+				return (String)dc;
+			}
+			dc = claims.get("srfdcid");
+			if (dc instanceof String && StringUtils.hasLength((String)dc)) {
+				return (String)dc;
+			}
+		}
+		catch (Throwable e) {
+			log.debug(String.format("解析Token租户信息发生异常，%1$s", e.getMessage()));
+		}
+		return null;
+	}
+
 	@Override
 	public boolean doFilter(ServletRequest request, ServletResponse response) throws IOException, ServletException {
 		return this.doFilterInternal((HttpServletRequest) request, (HttpServletResponse) response);
@@ -390,6 +421,7 @@ public abstract class SysUAAUtilRuntimeBase extends SysUtilRuntimeBase implement
 				Employee dcEmployee = null;
 				Collection<? extends GrantedAuthority> authorities = null;
 				Map<String, Object> session = null;
+				String tokenDc = this.getDcFromToken(authToken);
 				if (StringUtils.hasLength(srfsystemid) 
 						&& StringUtils.hasLength(srfdcid) && StringUtils.hasLength(srfdcsystemid) && StringUtils.hasLength(srfuserid)) {
 					
@@ -492,11 +524,12 @@ public abstract class SysUAAUtilRuntimeBase extends SysUtilRuntimeBase implement
 //							
 //						}
 						else
-							if((DataTypeUtils.getIntegerValue(authenticationUser.getSuperuser(), 0) == 1)
+						if((DataTypeUtils.getIntegerValue(authenticationUser.getSuperuser(), 0) == 1)
 									||(DataTypeUtils.getIntegerValue(authenticationUser.getApiuser(), 0) == 1)) {
-								//超级用户用自身身份构造EMP
-								dcEmployee = new Employee();
-								dcEmployee.setUserId(authenticationUser.getUserid());
+							//超级用户用自身身份构造EMP
+							dcEmployee = new Employee();
+							dcEmployee.setSrfdcid(tokenDc);
+							dcEmployee.setUserId(authenticationUser.getUserid());
 								dcEmployee.setUserName(authenticationUser.getUsername());
 								dcEmployee.setPersonName(authenticationUser.getPersonname());
 								dcEmployee.setUAAUserId(authenticationUser.getUserid());
@@ -628,6 +661,7 @@ public abstract class SysUAAUtilRuntimeBase extends SysUtilRuntimeBase implement
 				Employee dcEmployee = null;
 				Collection<? extends GrantedAuthority> authorities = null;
 				Map<String, Object> session = null;
+				String tokenDc = this.getDcFromToken(authToken);
 				if (StringUtils.hasLength(srfsystemid) 
 						&& StringUtils.hasLength(srfdcid) && StringUtils.hasLength(srfdcsystemid) && StringUtils.hasLength(srfuserid)) {
 					
@@ -730,11 +764,12 @@ public abstract class SysUAAUtilRuntimeBase extends SysUtilRuntimeBase implement
 //							
 //						}
 						else
-							if((DataTypeUtils.getIntegerValue(authenticationUser.getSuperuser(), 0) == 1)
+						if((DataTypeUtils.getIntegerValue(authenticationUser.getSuperuser(), 0) == 1)
 									||(DataTypeUtils.getIntegerValue(authenticationUser.getApiuser(), 0) == 1)){
-								//超级用户用自身身份构造EMP
-								dcEmployee = new Employee();
-								dcEmployee.setUserId(authenticationUser.getUserid());
+							//超级用户用自身身份构造EMP
+							dcEmployee = new Employee();
+							dcEmployee.setSrfdcid(tokenDc);
+							dcEmployee.setUserId(authenticationUser.getUserid());
 								dcEmployee.setUserName(authenticationUser.getUsername());
 								dcEmployee.setPersonName(authenticationUser.getPersonname());
 								dcEmployee.setUAAUserId(authenticationUser.getUserid());
