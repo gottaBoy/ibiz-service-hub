@@ -53,4 +53,18 @@ class PSModelsTest {
         assertEquals(26, PSModels.getModelInstDataEntities().size());
         assertFalse(PSModels.isModelInstDataEntity("PSSYSSFPUBPKG"));
     }
+
+    @Test
+    void appConfigurationEntitiesUseTheReadOnlyConfigurationManagerRegistry() {
+        String[][] mappings = {
+            {PSModels.PSPF, "T_SRFPSPF"},
+            {PSModels.PSPFSTYLE, "T_SRFPSPFSTYLE"},
+            {PSModels.PSAPPTYPE, "T_SRFPSAPPTYPE"}
+        };
+        for (String[] mapping : mappings) {
+            assertTrue(PSModels.isConfigInstDataEntity(mapping[0]), mapping[0]);
+            assertFalse(PSModels.isModelInstDataEntity(mapping[0]), mapping[0]);
+            assertEquals(mapping[1], PSModels.getConfigInstDataEntityTable(mapping[0]));
+        }
+    }
 }

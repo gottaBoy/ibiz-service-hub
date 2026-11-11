@@ -101,6 +101,9 @@ public final class PSModels {
 
     public static final String PSMODELRT = "PSMODELRT";
     public static final String PSMODELRTCFG = "PSMODELRTCFG";
+    public static final String PSAPPTYPE = "PSAPPTYPE";
+    public static final String PSPF = "PSPF";
+    public static final String PSPFSTYLE = "PSPFSTYLE";
     public static final String PSSUBSYSSERVICEAPI = "PSSUBSYSSERVICEAPI";
     public static final String PSSYSAPP = "PSSYSAPP";
     public static final String PSSYSBACKSERVICE = "PSSYSBACKSERVICE";
@@ -154,6 +157,9 @@ public final class PSModels {
         registerConfig(PSDEDBCFG);
         registerConfig(PSDEDBTABLE);
         registerConfig(PSDEVCENTERDBINST);
+        registerConfig(PSPF);
+        registerConfig(PSPFSTYLE);
+        registerConfig(PSAPPTYPE);
     }
 
     private PSModels() {

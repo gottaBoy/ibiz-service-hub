@@ -94,6 +94,21 @@ class SystemAccessManagerEditorRegistryTest {
     }
 
     @Test
+    void applicationConfigurationEntitiesSelectTheReadOnlyConfigManager() throws Exception {
+        for (String codeName : Arrays.asList("PSPF", "PSPFStyle", "PSAppType")) {
+            Factory fixture = new Factory();
+            PSDataEntityImpl model = model(codeName);
+            assertTrue(PSModels.isConfigInstDataEntity(model.getName()));
+            assertFalse(PSModels.isModelInstDataEntity(model.getName()));
+            IDataEntityAccessManager manager = fixture.create(model);
+            assertEquals(PSConfigDEAccessManager.class, manager.getClass());
+            assertSame(manager, fixture.autowired.get(0));
+            assertEquals(Arrays.asList(codeName + "DEAccessManager", "PSConfigDEAccessManager"),
+                    fixture.pluginLookups);
+        }
+    }
+
+    @Test
     void explicitlyConfiguredEntityPluginStillPrecedesTheRegistryBranch() throws Exception {
         Factory fixture = new Factory();
         IDataEntityAccessManager explicit = new net.ibizsys.central.cloud.core.dataentity.security.DataEntityAccessManager();
