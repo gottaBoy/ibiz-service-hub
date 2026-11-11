@@ -101,6 +101,7 @@ public final class PSModels {
 
     public static final String PSMODELRT = "PSMODELRT";
     public static final String PSMODELRTCFG = "PSMODELRTCFG";
+    public static final String PSSUBSYSSERVICEAPI = "PSSUBSYSSERVICEAPI";
     public static final String PSSYSAPP = "PSSYSAPP";
     public static final String PSSYSBACKSERVICE = "PSSYSBACKSERVICE";
     public static final String PSSYSDBSCHEME = "PSSYSDBSCHEME";
@@ -111,6 +112,8 @@ public final class PSModels {
     public static final String PSSYSMODELINST = "PSSYSMODELINST";
     public static final String PSSYSMODELLOG = "PSSYSMODELLOG";
     public static final String PSSYSRUNSESSION = "PSSYSRUNSESSION";
+    public static final String PSSYSSERVICEAPI = "PSSYSSERVICEAPI";
+    public static final String PSSYSSFPUB = "PSSYSSFPUB";
     public static final String PSSYSVALUERULE = "PSSYSVALUERULE";
     public static final String PSSYSVIEWPANELMODEL = "PSSYSVIEWPANELMODEL";
     public static final String PSWORKFLOW = "PSWORKFLOW";
@@ -140,6 +143,11 @@ public final class PSModels {
         registerModel(PSMODELRT);
         registerModel(PSSYSMODELINST);
         registerModel(PSSYSRUNSESSION);
+        registerModel(PSSYSDBSCHEME);
+        registerModel(PSSYSAPP);
+        registerModel(PSSYSSFPUB);
+        registerModel(PSSYSSERVICEAPI);
+        registerModel(PSSUBSYSSERVICEAPI);
 
         registerConfig(PSDBTYPE);
         registerConfig(PSDBVALUEOP);

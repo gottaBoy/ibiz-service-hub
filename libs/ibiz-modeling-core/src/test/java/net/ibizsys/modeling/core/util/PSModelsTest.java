@@ -35,4 +35,22 @@ class PSModelsTest {
                 UnsupportedOperationException.class,
                 () -> entities.add("UNKNOWN_ENTITY"));
     }
+
+    @Test
+    void reviewedEditorEntitiesAreModelInstancesAndNeverConfigurationEntities() {
+        String[][] mappings = {
+            {PSModels.PSSYSDBSCHEME, "T_SRFPSSYSDBSCHEME"},
+            {PSModels.PSSYSAPP, "T_SRFPSSYSAPP"},
+            {PSModels.PSSYSSFPUB, "T_SRFPSSYSSFPUB"},
+            {PSModels.PSSYSSERVICEAPI, "T_SRFPSSYSSERVICEAPI"},
+            {PSModels.PSSUBSYSSERVICEAPI, "T_SRFPSSUBSYSSERVICEAPI"}
+        };
+        for (String[] mapping : mappings) {
+            assertTrue(PSModels.isModelInstDataEntity(mapping[0]), mapping[0]);
+            assertFalse(PSModels.isConfigInstDataEntity(mapping[0]), mapping[0]);
+            assertEquals(mapping[1], PSModels.getModelInstDataEntityTable(mapping[0]));
+        }
+        assertEquals(26, PSModels.getModelInstDataEntities().size());
+        assertFalse(PSModels.isModelInstDataEntity("PSSYSSFPUBPKG"));
+    }
 }
