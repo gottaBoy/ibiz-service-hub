@@ -6,6 +6,8 @@ import net.ibizsys.central.util.ISearchContextDTO;
 import net.ibizsys.modeling.core.security.IPSDevSysUser;
 import net.ibizsys.runtime.security.IUserContext;
 import net.ibizsys.runtime.security.UserContext;
+import net.ibizsys.runtime.util.ErrorException;
+import net.ibizsys.runtime.util.Errors;
 import net.ibizsys.runtime.util.IAppContext;
 import org.springframework.util.StringUtils;
 
@@ -52,11 +54,11 @@ public class PSModelDEAccessManager extends DataEntityAccessManagerBase {
     private IPSDevSysUser getPSDevSysUser() throws Exception {
         IAppContext appContext = UserContext.getCurrentMust().getAppContext();
         if (appContext == null) {
-            throw new Exception("应用上下文对象无效");
+            throw new ErrorException("应用上下文对象无效", Errors.ACCESSDENY);
         }
         Object root = appContext.get(APPCONTEXT_PSDEVSLNSYS);
         if (!(root instanceof String) || !isModelIdentifier((String) root)) {
-            throw new Exception("未传入开发系统标识");
+            throw new ErrorException("未传入开发系统标识", Errors.ACCESSDENY);
         }
         String solutionSystemId = (String) root;
         IPSDevSysUser systemUser =

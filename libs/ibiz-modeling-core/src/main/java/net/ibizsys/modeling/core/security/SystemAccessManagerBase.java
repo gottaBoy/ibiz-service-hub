@@ -48,6 +48,7 @@ import net.ibizsys.runtime.util.ActionSession;
 import net.ibizsys.runtime.util.ActionSessionManager;
 import net.ibizsys.runtime.util.DataTypeUtils;
 import net.ibizsys.runtime.util.ErrorException;
+import net.ibizsys.runtime.util.Errors;
 import net.ibizsys.runtime.util.ExceptionUtils;
 import net.ibizsys.runtime.util.IAppContext;
 import net.ibizsys.runtime.util.KeyValueUtils;
@@ -381,7 +382,7 @@ implements ISystemAccessManager {
             throw new Exception(String.format("\u672a\u652f\u6301\u7684\u76ee\u6807\u7c7b\u578b[%1$s]", strObjectType));
         }
         if (!isValidPSDevSlnSysId(strObjectId)) {
-            throw new Exception("Invalid authorization model library identifier");
+            throw new ErrorException("Invalid authorization model library identifier", Errors.ACCESSDENY);
         }
         String strPSDevUserKey = this.getPSDevUserKey(strObjectType, strObjectId);
         IAuthenticationUser iAuthenticationUser = AuthenticationUser.getCurrentMust();
@@ -433,7 +434,7 @@ implements ISystemAccessManager {
         if ("SYS".equalsIgnoreCase(strObjectType)) {
             PSDevSlnSysDTO psDevSlnSysDTO = (PSDevSlnSysDTO)this.iPSDevSlnSysService.get(strObjectId, true);
             if (psDevSlnSysDTO == null) {
-                throw new Exception(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u7cfb\u7edf[%s]", strObjectId));
+                throw new ErrorException(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u7cfb\u7edf[%s]", strObjectId), Errors.ACCESSDENY);
             }
             PSDevSysUser psDevUser = new PSDevSysUser();
             PSDevSlnUserDTO psDevSlnUserDTO = this.getPSDevSlnUserDTO(psDevSlnSysDTO, strPSDevUserId, true);
@@ -478,7 +479,7 @@ implements ISystemAccessManager {
         } else if ("SLN".equalsIgnoreCase(strObjectType)) {
             PSDevSlnDTO psDevSlnDTO = (PSDevSlnDTO)this.iPSDevSlnService.get(strObjectId, true);
             if (psDevSlnDTO == null) {
-                throw new Exception(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u65b9\u6848[%s]", strObjectId));
+                throw new ErrorException(String.format("\u65e0\u6cd5\u83b7\u53d6\u6307\u5b9a\u5f00\u53d1\u65b9\u6848[%s]", strObjectId), Errors.ACCESSDENY);
             }
             PSDevSlnUser psDevUser = new PSDevSlnUser();
             PSDevSlnUserDTO psDevSlnUserDTO = this.getPSDevSlnUserDTO(psDevSlnDTO, strPSDevUserId, true);
@@ -676,7 +677,7 @@ implements ISystemAccessManager {
                 log.debug((Object)"\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548\uff0c\u5ffd\u7565\u83b7\u53d6\u5f00\u53d1\u7cfb\u7edf\u7528\u6237");
                 return null;
             }
-            throw new Exception("\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548");
+            throw new ErrorException("\u5e94\u7528\u4e0a\u4e0b\u6587\u5bf9\u8c61\u65e0\u6548", Errors.ACCESSDENY);
         }
         Object root = iAppContext.get("PSDEVSLNSYS");
         if (!(root instanceof String) || !isValidPSDevSlnSysId((String)root)) {
@@ -684,7 +685,7 @@ implements ISystemAccessManager {
                 log.debug((Object)"\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6\uff0c\u5ffd\u7565\u83b7\u53d6\u5f00\u53d1\u7cfb\u7edf\u7528\u6237");
                 return null;
             }
-            throw new Exception("\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6");
+            throw new ErrorException("\u672a\u4f20\u5165\u5f00\u53d1\u7cfb\u7edf\u6807\u8bc6", Errors.ACCESSDENY);
         }
         String strPSDevSlnSysId = (String)root;
         ActionSession actionSession = ActionSessionManager.getCurrentSession();
