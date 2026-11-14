@@ -410,16 +410,26 @@ public class ActionSessionManager {
 	 */
 	public static Object execute(IAction iAction, Object[] args, int nPropagation) throws Throwable {
 		boolean bOpenActionSession = (ActionSessionManager.getCurrentSession() == null);
-
-		boolean bCommit = true;
+		ActionSession currentSession = ActionSessionManager.openSession();
+		Throwable failure = null;
 		try {
-			return ActionSessionManager.openSession().execute(null, iAction, args, nPropagation);
+			return currentSession.execute(null, iAction, args, nPropagation);
 		} catch (Throwable ex) {
-			bCommit = false;
+			failure = ex;
 			throw ex;
 		} finally {
-			if (bOpenActionSession) {
-				ActionSessionManager.closeSession(bCommit);
+			if (bOpenActionSession && ActionSessionManager.getCurrentSession() == currentSession) {
+				if (failure == null) {
+					ActionSessionManager.closeSession(true);
+				} else {
+					try {
+						ActionSessionManager.closeSession(false);
+					} catch (Throwable closeFailure) {
+						if (closeFailure != failure) {
+							failure.addSuppressed(closeFailure);
+						}
+					}
+				}
 			}
 		}
 	}
