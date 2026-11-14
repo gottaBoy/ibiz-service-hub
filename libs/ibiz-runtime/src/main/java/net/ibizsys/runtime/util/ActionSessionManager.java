@@ -220,8 +220,14 @@ public class ActionSessionManager {
 	static public void closeSession(boolean bCommit) {
 		ActionSession currentSession = actionSession.get();
 		if (currentSession != null) {
-			currentSession.close(bCommit);
-			actionSession.set(null);
+			try {
+				currentSession.close(bCommit);
+			} finally {
+				// Keep a replacement session opened by a close callback.
+				if (actionSession.get() == currentSession) {
+					actionSession.remove();
+				}
+			}
 		}
 
 	}
