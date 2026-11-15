@@ -1,5 +1,9 @@
 package net.ibizsys.modeling.core.security;
 
+import java.util.Collections;
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 import net.ibizsys.central.cloud.core.dataentity.security.IDataEntityAccessManager;
 import net.ibizsys.central.cloud.core.security.AuthenticationUser;
 import net.ibizsys.central.cloud.core.security.EmployeeContext;
@@ -86,6 +90,7 @@ implements ISystemAccessManager {
     public static final PSDevUser ACCESSDENY = new PSDevUser();
     public static final String TAG_PSMODELDEACCESSMANAGER = "PSModelDEAccessManager";
     public static final String TAG_PCONFIGDEACCESSMANAGER = "PSConfigDEAccessManager";
+    public static final String APPDATA_MODEL_CONTEXT = "srfmodelcontext";
     private int nRequireModelInstVer = 0;
     private String strRuntimeModelVer = null;
     private Boolean bModelAutoUpgrate = false;
@@ -194,7 +199,9 @@ implements ISystemAccessManager {
         if (iPSDevUser == null) {
             iPSDevUser = this.getPSDevUser(appData);
         }
-        if ((iPSDevSysUser = this.getCurrentPSDevSysUser(true)) != null) {
+        iPSDevSysUser = this.getCurrentPSDevSysUser(true);
+        this.prepareModelContext(appData, iPSDevUser, iPSDevSysUser);
+        if (iPSDevSysUser != null) {
             appData.getExtMqttTopicIf().set("psdevslnsystopic", (Object)iPSDevSysUser.getPSDevSlnSysId());
             appData.getExtMqttTopicIf().set("studiotopic", (Object)String.format("%1$s_psdevslnsys_%2$s", EmployeeContext.getCurrent().getMqtttopic(), iPSDevSysUser.getPSDevSlnSysId()));
             appData.getContextIf().set("srfpssysname", (Object)iPSDevSysUser.getPSDevSlnSysName());
@@ -263,6 +270,31 @@ implements ISystemAccessManager {
         }
         appData.set("studiover", (Object)Version.getVersionString());
         return appData;
+    }
+
+    protected void prepareModelContext(AppData appData, IPSDevUser actor, IPSDevSysUser user) throws Exception {
+        appData.reset(APPDATA_MODEL_CONTEXT);
+        IAppContext appContext = ActionSessionManager.getAppContext();
+        Object root = appContext == null ? null : appContext.get("PSDEVSLNSYS");
+        if (!(root instanceof String) || !isValidPSDevSlnSysId((String) root)
+                || user == null || user.isExpired() || user.getAccMode() <= 0
+                || (!user.isAdminMode() && (user.getAccMode() & IPSDevUserBase.ACCMODE_READ) == 0)) {
+            return;
+        }
+        if (actor == null || actor.isExpired()
+                || !isValidPSDevSlnSysId(actor.getPSDevUserId())
+                || !isValidPSDevSlnSysId(actor.getPSDevCenterId())
+                || !actor.getPSDevUserId().equalsIgnoreCase(user.getPSDevUserId())
+                || !actor.getPSDevCenterId().equalsIgnoreCase(user.getPSDevCenterId())
+                || !((String) root).equalsIgnoreCase(user.getPSDevSlnSysId())
+                || !isValidPSDevSlnSysId(user.getPSSystemId())) {
+            throw new ErrorException("Model context does not match the authorized library", Errors.ACCESSDENY);
+        }
+        // Only expose the selected identifiers, never the system DTO or its configuration.
+        Map<String, String> context = new LinkedHashMap<>();
+        context.put("psdevslnsys", (String) root);
+        context.put("pssystemid", user.getPSSystemId());
+        appData.set(APPDATA_MODEL_CONTEXT, Collections.unmodifiableMap(context));
     }
 
     protected IPSDevUser getPSDevUser(AppData appData) throws Throwable {

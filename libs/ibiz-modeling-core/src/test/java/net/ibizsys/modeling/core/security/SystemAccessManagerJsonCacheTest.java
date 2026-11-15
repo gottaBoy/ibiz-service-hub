@@ -39,6 +39,8 @@ import net.ibizsys.runtime.security.IUserContext;
 import net.ibizsys.runtime.security.UserContext;
 import net.ibizsys.runtime.util.ActionSessionManager;
 import net.ibizsys.runtime.util.AppContext;
+import net.ibizsys.runtime.util.ErrorException;
+import net.ibizsys.runtime.util.Errors;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -705,6 +707,7 @@ class SystemAccessManagerJsonCacheTest {
         assertFalse(actual.getExtMqttTopicIf().contains("studiotopic"));
         assertFalse(actual.contains("devsysstate"));
         assertFalse(actual.contains("devsysstatemsg"));
+        assertFalse(actual.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
     }
 
     @Test
@@ -784,7 +787,164 @@ class SystemAccessManagerJsonCacheTest {
             assertEquals(10, actual.get("devsysstate"));
             assertEquals(SystemAccessManagerBase.SYSSTATEMSG_UNINIT, actual.get("devsysstatemsg"));
             assertEquals(net.ibizsys.modeling.core.Version.getVersionString(), actual.get("studiover"));
+            assertEquals(Map.of("psdevslnsys", "library-a", "pssystemid", "model-a"),
+                    actual.get(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
             assertEquals(List.of(2, 1, 1, 0), fixture.sourceReads());
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionUsesOnlyAuthorizedIdentifiersWithoutReadingServices() throws Exception {
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            ActionSessionManager.getAppContext().set("PSDEVSLNSYS", "library-a");
+            ActionSessionManager.getAppContext().set("PSSYSTEMID", "untrusted-system");
+            Fixture fixture = new Fixture();
+            for (int mode : new int[] { 1, 3 }) {
+                PSDevSysUser user = (PSDevSysUser) cached("SYS", mode, false, deadline(120000));
+                AppData data = new AppData();
+                data.set("retained", true);
+                fixture.manager.prepareModelContext(data, center(false), user);
+                assertEquals(Map.of("psdevslnsys", "library-a", "pssystemid", "model-a"),
+                        data.get(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+                Map<?, ?> serialized = fixture.runtime.deserialize(fixture.runtime.serialize(data), Map.class);
+                assertEquals(Map.of("psdevslnsys", "library-a", "pssystemid", "model-a"),
+                        serialized.get(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+                assertEquals(2, serialized.size());
+                assertEquals(true, data.get("retained"));
+                assertEquals("untrusted-system", ActionSessionManager.getAppContext().get("PSSYSTEMID"));
+            }
+            assertEquals(List.of(0, 0, 0, 0), fixture.sourceReads());
+            assertTrue(fixture.cache.reads.isEmpty());
+            assertTrue(fixture.cache.writes.isEmpty());
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionNeverKeepsAStaleValueForUnreadableExpiredOrMissingGrants() throws Exception {
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            ActionSessionManager.getAppContext().set("PSDEVSLNSYS", "library-a");
+            Fixture fixture = new Fixture();
+            List<IPSDevSysUser> users = new ArrayList<>();
+            users.add(null);
+            for (int mode : new int[] { 0, -1, 2, 4 }) {
+                users.add((IPSDevSysUser) cached("SYS", mode, false, deadline(120000)));
+            }
+            users.add((IPSDevSysUser) cached("SYS", 3, false, deadline(-60000)));
+            users.add((IPSDevSysUser) cached("SYS", -1, true, deadline(120000)));
+            users.add((IPSDevSysUser) cached("SYS", 0, true, deadline(120000)));
+            for (IPSDevSysUser user : users) {
+                AppData data = new AppData();
+                data.set(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT,
+                        Map.of("psdevslnsys", "foreign-root", "pssystemid", "foreign-system"));
+                fixture.manager.prepareModelContext(data, center(false), user);
+                assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+            }
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionClearsStaleDataForMissingAndMalformedRequestRoots() throws Exception {
+        Fixture fixture = new Fixture();
+        IPSDevSysUser user = (IPSDevSysUser) cached("SYS", 3, false, deadline(120000));
+        AppData data = new AppData();
+        data.set(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT, Map.of("stale", true));
+        fixture.manager.prepareModelContext(data, center(false), user);
+        assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            for (Object root : java.util.Arrays.asList(null, "", 1, true, "library-a ", "\u00a0library-a", "a\nb")) {
+                ActionSessionManager.getAppContext().set("PSDEVSLNSYS", root);
+                data.set(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT, Map.of("stale", true));
+                fixture.manager.prepareModelContext(data, center(false), user);
+                assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+            }
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionRejectsForeignAndInvalidCanonicalRootsBeforePublishing() throws Exception {
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            ActionSessionManager.getAppContext().set("PSDEVSLNSYS", "library-a");
+            Fixture fixture = new Fixture();
+            for (String value : java.util.Arrays.asList(null, "", "model-a ", "\u00a0model-a", "a\nb")) {
+                PSDevSysUser user = (PSDevSysUser) cached("SYS", 3, false, deadline(120000));
+                user.setPSSystemId(value);
+                AppData data = new AppData();
+                ErrorException error = assertThrows(ErrorException.class,
+                        () -> fixture.manager.prepareModelContext(data, center(false), user));
+                assertEquals(Errors.ACCESSDENY, error.getErrorCode());
+                assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+            }
+            PSDevSysUser foreign = (PSDevSysUser) cached("SYS", 3, false, deadline(120000));
+            foreign.setPSDevSlnSysId("library-b");
+            AppData data = new AppData();
+            assertThrows(ErrorException.class, () -> fixture.manager.prepareModelContext(data, center(false), foreign));
+            assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionKeepsCaseEquivalentRequestedRootAndCurrentLogicalId() throws Exception {
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            ActionSessionManager.getAppContext().set("PSDEVSLNSYS", "LIBRARY-A");
+            Fixture fixture = new Fixture();
+            PSDevSysUser user = (PSDevSysUser) cached("SYS", 3, false, deadline(120000));
+            AppData data = new AppData();
+            fixture.manager.prepareModelContext(data, center(false), user);
+            assertEquals(Map.of("psdevslnsys", "LIBRARY-A", "pssystemid", "model-a"),
+                    data.get(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+            user.setPSSystemId("model-a-new");
+            fixture.manager.prepareModelContext(data, center(false), user);
+            assertEquals(Map.of("psdevslnsys", "LIBRARY-A", "pssystemid", "model-a-new"),
+                    data.get(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+        } finally {
+            ActionSessionManager.closeSession(false);
+        }
+    }
+
+    @Test
+    void modelContextProjectionCannotAdoptAnotherPrincipalOrCenterFromAHolder() throws Exception {
+        ActionSessionManager.openSession().setAppContext(AppContext.newInstance(null));
+        try {
+            ActionSessionManager.getAppContext().set("PSDEVSLNSYS", "library-a");
+            Fixture fixture = new Fixture();
+            IPSDevSysUser user = (IPSDevSysUser) cached("SYS", 3, false, deadline(120000));
+            List<PSDevUser> actors = new ArrayList<>();
+            actors.add(null);
+            PSDevUser differentPerson = center(false);
+            differentPerson.setPSDevUserId("editor-b");
+            actors.add(differentPerson);
+            PSDevUser differentCenter = center(true);
+            differentCenter.setPSDevCenterId("center-b");
+            actors.add(differentCenter);
+            PSDevUser expired = center(false);
+            expired.setExpiredTime(deadline(-60000));
+            actors.add(expired);
+            PSDevUser missingPerson = center(false);
+            missingPerson.setPSDevUserId(null);
+            actors.add(missingPerson);
+            for (PSDevUser actor : actors) {
+                AppData data = new AppData();
+                data.set(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT, Map.of("stale", true));
+                ErrorException error = assertThrows(ErrorException.class,
+                        () -> fixture.manager.prepareModelContext(data, actor, user));
+                assertEquals(Errors.ACCESSDENY, error.getErrorCode());
+                assertFalse(data.contains(SystemAccessManagerBase.APPDATA_MODEL_CONTEXT));
+            }
         } finally {
             ActionSessionManager.closeSession(false);
         }
