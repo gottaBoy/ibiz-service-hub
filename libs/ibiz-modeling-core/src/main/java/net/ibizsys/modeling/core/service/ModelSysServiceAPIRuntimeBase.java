@@ -21,7 +21,7 @@ import net.ibizsys.central.service.ISysServiceAPIRuntime;
 import net.ibizsys.central.service.SysServiceAPIRuntimeException;
 import net.ibizsys.central.service.client.IWebClientRep;
 import net.ibizsys.central.service.client.WebClientBase;
-import net.ibizsys.modeling.core.dataentity.service.ModelDEServiceAPIRuntime;
+import net.ibizsys.modeling.core.dataentity.service.ModelObservationDEServiceAPIRuntime;
 import net.ibizsys.modeling.core.util.Base64Helper;
 import net.ibizsys.runtime.util.DataTypeUtils;
 import net.ibizsys.runtime.util.Entity;
@@ -40,7 +40,9 @@ public abstract class ModelSysServiceAPIRuntimeBase extends SysRestServiceAPIRun
 
     @Override
     protected IDEServiceAPIRuntime createDefaultDEServiceAPIRuntime() {
-        return new ModelDEServiceAPIRuntime();
+        // The overview runtime is exact-action gated and delegates every other
+        // entity/method to the existing modeling implementation.
+        return new ModelObservationDEServiceAPIRuntime();
     }
 
     @RequestMapping(method = RequestMethod.POST,
