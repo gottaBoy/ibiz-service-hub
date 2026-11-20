@@ -59,9 +59,10 @@ class ModelObservationDEServiceAPIRuntimeTest {
 
     @Test
     void oldVoidMetadataAndMethodPolicyChangesFailBeforeNativeParsingOrAuthorization() throws Throwable {
-        for (String variant : Arrays.asList("VOID", "GET", "UPDATE", "BATCH", "DTOS", "OUTPUT")) {
+        for (String variant : Arrays.asList("VOID", "API_VOID", "GET", "UPDATE", "BATCH", "DTOS", "OUTPUT")) {
             Fixture fixture = new Fixture();
             if ("VOID".equals(variant)) fixture.action.with("getPSDEActionReturn").put("type", "VOID");
+            if ("API_VOID".equals(variant)) fixture.methodNode.with("getPSDEServiceAPIMethodReturn").put("type", "VOID");
             if ("GET".equals(variant)) fixture.methodNode.put("requestMethod", "GET");
             if ("UPDATE".equals(variant)) fixture.methodNode.put("dataAccessAction", "UPDATE");
             if ("BATCH".equals(variant)) fixture.action.put("batchAction", true);
@@ -133,6 +134,7 @@ class ModelObservationDEServiceAPIRuntimeTest {
             methodNode.put("methodType", "DEACTION");
             methodNode.put("requestMethod", "POST");
             methodNode.put("dataAccessAction", "READ");
+            methodNode.putObject("getPSDEServiceAPIMethodReturn").put("type", "DTO");
             method.init(new PSModelServiceImpl(), null, methodNode);
             method.setPSDEAction(nativeAction);
             PSDEFieldImpl parentField = new PSDEFieldImpl();

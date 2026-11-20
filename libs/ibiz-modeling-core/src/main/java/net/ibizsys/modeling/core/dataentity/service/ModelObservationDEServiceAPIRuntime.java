@@ -17,6 +17,25 @@ import net.ibizsys.runtime.util.Errors;
  * Candidate-only binding for the exact system overview action.
  */
 public class ModelObservationDEServiceAPIRuntime extends ModelDEServiceAPIRuntime {
+    public static boolean supportsOverviewMethod(IPSDEServiceAPIMethod method) {
+        if (method == null || !"SysOverviewCnt".equalsIgnoreCase(method.getCodeName())
+                || !"DEACTION".equals(method.getMethodType())
+                || !"POST".equals(method.getRequestMethod())
+                || !"READ".equals(method.getDataAccessAction())
+                || method.getPSDEServiceAPIMethodReturn() == null
+                || !"DTO".equals(method.getPSDEServiceAPIMethodReturn().getType())) {
+            return false;
+        }
+        IPSDEAction action = method.getPSDEAction();
+        return action != null && "SysOverviewCnt".equalsIgnoreCase(action.getCodeName())
+                && "READ".equals(action.getDataAccessAction())
+                && !action.isBatchAction() && action.getPSDEActionInput() != null
+                && "DTO".equals(action.getPSDEActionInput().getType())
+                && !action.getPSDEActionInput().isOutput()
+                && action.getPSDEActionReturn() != null
+                && "DTO".equals(action.getPSDEActionReturn().getType());
+    }
+
     @Override
     protected Object onExecuteAction(String scope, IDEServiceAPIRSRuntime relationship,
             String parentKey, IPSDEServiceAPIMethod method, Object body, String key, Object tag)
@@ -25,17 +44,7 @@ public class ModelObservationDEServiceAPIRuntime extends ModelDEServiceAPIRuntim
                 || !"SysOverviewCnt".equalsIgnoreCase(method.getCodeName())) {
             return super.onExecuteAction(scope, relationship, parentKey, method, body, key, tag);
         }
-        IPSDEAction action = method.getPSDEActionMust();
-        if (!"DEACTION".equals(method.getMethodType())
-                || !"POST".equals(method.getRequestMethod())
-                || !"READ".equals(method.getDataAccessAction())
-                || !"SysOverviewCnt".equalsIgnoreCase(action.getCodeName())
-                || !"READ".equals(action.getDataAccessAction())
-                || action.isBatchAction() || action.getPSDEActionInput() == null
-                || !"DTO".equals(action.getPSDEActionInput().getType())
-                || action.getPSDEActionInput().isOutput()
-                || action.getPSDEActionReturn() == null
-                || !"DTO".equals(action.getPSDEActionReturn().getType())
+        if (!supportsOverviewMethod(method)
                 || key != null || !(body instanceof Map<?, ?>)
                 || relationship == null || relationship.getMajorDEServiceAPIRuntime() == null
                 || relationship.getMinorDEServiceAPIRuntime() != this) {
