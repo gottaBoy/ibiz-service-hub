@@ -11,7 +11,9 @@ import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Proxy;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import net.ibizsys.central.ISystemRuntime;
@@ -116,6 +118,19 @@ class SystemAccessManagerRootErrorMappingTest {
         }
     }
 
+    @Test
+    void explicitlyNullModelRootMapsTo403ForRecordAndSearchReadAndUpdate() {
+        AppContext app = new AppContext();
+        app.set("PSDEVSLNSYS", null);
+        assertTrue(app.contains("PSDEVSLNSYS"));
+        assertNull(app.get("PSDEVSLNSYS"));
+
+        assertModelRootDenied(app);
+
+        assertTrue(app.contains("PSDEVSLNSYS"));
+        assertNull(app.get("PSDEVSLNSYS"));
+    }
+
     private void assertModelRootDenied(IAppContext app) {
         List<String> lookups = new ArrayList<>();
         ISystemAccessManager access = proxy(ISystemAccessManager.class, (object, method, args) -> {
@@ -139,16 +154,20 @@ class SystemAccessManagerRootErrorMappingTest {
         for (String action : Arrays.asList("READ", "UPDATE")) {
             EntityDTO input = new EntityDTO();
             input.set("pssystemid", "original-untrusted-input");
+            Map<String, Object> inputBefore = new LinkedHashMap<>(input.any());
             Throwable recordFailure = assertThrows(ErrorException.class, () ->
                 manager.testDataAccessAction(user, null, null, "owned-record", input, action));
             assertMapped(recordFailure, 403, Errors.ACCESSDENY);
             assertEquals("original-untrusted-input", input.get("pssystemid"));
+            assertEquals(inputBefore, input.any());
             SearchContextDTO search = new SearchContextDTO();
             search.set("pssystemid", "original-untrusted-filter");
+            Map<String, Object> searchBefore = new LinkedHashMap<>(search.any());
             Throwable searchFailure = assertThrows(ErrorException.class, () ->
                 manager.testDataAccessAction(user, null, null, search, action));
             assertMapped(searchFailure, 403, Errors.ACCESSDENY);
             assertEquals("original-untrusted-filter", search.get("pssystemid"));
+            assertEquals(searchBefore, search.any());
         }
         assertTrue(lookups.isEmpty());
     }
