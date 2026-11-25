@@ -169,6 +169,9 @@ public class ResponseExceptionHandler implements IResponseExceptionHandler {
 		out.put("type", "DataEntityRuntimeException");
 		out.put("code", dataEntityRuntimeException.getErrorCode());
 		out.put("message", dataEntityRuntimeException.getMessage());
+		if (dataEntityRuntimeException.getErrorCode() == Errors.INVALIDDATA) {
+			return ResponseEntity.status(HttpStatus.NOT_FOUND).contentType(MediaType.APPLICATION_JSON).body(out);
+		}
 		return getResponseEntity(out);
 	}
 

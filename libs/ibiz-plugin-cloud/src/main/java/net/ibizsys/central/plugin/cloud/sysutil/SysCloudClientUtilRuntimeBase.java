@@ -7,9 +7,13 @@ import org.apache.commons.logging.LogFactory;
 import org.springframework.util.StringUtils;
 
 import net.ibizsys.central.cloud.core.cloudutil.ICloudUtilRuntime;
+import net.ibizsys.central.cloud.core.cloudutil.ICloudPortalUtilRuntime;
+import net.ibizsys.central.cloud.core.cloudutil.client.ICloudPortalClient;
+import net.ibizsys.central.cloud.core.spring.rt.ServiceHub;
 import net.ibizsys.central.cloud.core.sysutil.ISysCloudClientUtilRuntime;
 import net.ibizsys.central.cloud.core.sysutil.SysUtilRuntimeBase;
 import net.ibizsys.central.plugin.cloud.service.client.APIWebClientInvocationHandler;
+import net.ibizsys.central.plugin.cloud.service.client.LocalCloudPortalClient;
 import net.ibizsys.central.service.ISubSysServiceAPIRuntime;
 import net.ibizsys.central.service.client.IWebClient;
 import net.ibizsys.runtime.SystemRuntimeException;
@@ -206,6 +210,14 @@ public abstract class SysCloudClientUtilRuntimeBase extends SysUtilRuntimeBase i
 	
 	@Override
 	public <T> T getServiceClient(String strServiceType, Class<?> cls, boolean bAPIUserOnly) {
+		if (bAPIUserOnly && cls == ICloudPortalClient.class
+				&& (ICloudUtilRuntime.CLOUDSERVICE_PORTAL.equals(strServiceType)
+					|| ICloudUtilRuntime.CLOUDSERVICEURL_PORTAL.equals(strServiceType))) {
+			ICloudPortalUtilRuntime portal = this.getLocalCloudPortalRuntime();
+			if (portal != null) {
+				return (T) new LocalCloudPortalClient(portal);
+			}
+		}
 		IWebClient iWebClient  = this.getServiceClient(strServiceType);
 		T t = iWebClient.getProxyClient(cls);
 		if(bAPIUserOnly) {
@@ -218,6 +230,10 @@ public abstract class SysCloudClientUtilRuntimeBase extends SysUtilRuntimeBase i
 			return (T)apiWebClientProxyObject.getProxyObject();
 		}
 		return t;
+	}
+
+	protected ICloudPortalUtilRuntime getLocalCloudPortalRuntime() {
+		return ServiceHub.getInstance().getCloudUtilRuntime(null, ICloudPortalUtilRuntime.class, true);
 	}
 	
 }

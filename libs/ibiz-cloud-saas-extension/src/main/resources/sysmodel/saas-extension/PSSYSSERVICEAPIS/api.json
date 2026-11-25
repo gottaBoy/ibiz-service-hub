@@ -1545,7 +1545,8 @@
       "requestParamType" : "ENTITY",
       "requestPath" : "/save",
       "uniqueTag" : "APP_VIEW_THEME__DEACTION__SAVE",
-      "needResourceKey" : true
+      "needResourceKey": true,
+      "dataAccessAction": "CREATE"
     }, {
       "codeName" : "fetch_cur_system",
       "dataAccessAction" : "READ",

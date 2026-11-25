@@ -1,5 +1,11 @@
 package net.ibizsys.central.dataentity.logic;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.UndeclaredThrowableException;
+import java.util.Collections;
+import java.util.IdentityHashMap;
+import java.util.Set;
+
 import javax.script.Invocable;
 import javax.script.ScriptEngine;
 import javax.script.ScriptEngineManager;
@@ -16,6 +22,7 @@ import net.ibizsys.model.dataentity.logic.IPSDELogicParam;
 import net.ibizsys.model.dataentity.logic.IPSDERawCodeLogic;
 import net.ibizsys.runtime.ModelRuntimeBase;
 import net.ibizsys.runtime.dataentity.DataEntityRuntimeException;
+import net.ibizsys.runtime.util.ErrorException;
 import net.ibizsys.runtime.util.LogCats;
 import net.ibizsys.runtime.util.LogLevels;
 import net.ibizsys.runtime.util.ScriptCodeHolder;
@@ -207,6 +214,12 @@ public class DELogicScriptNodeRuntime extends ModelRuntimeBase implements IDELog
 			
 			
 		} catch (NoSuchMethodException | ScriptException ex) {
+			if (ex instanceof ScriptException) {
+				ErrorException businessError = getScriptBusinessError((ScriptException) ex);
+				if (businessError != null) {
+					throw businessError;
+				}
+			}
 			log.error(ex);
 			IDataEntityRuntime iDataEntityRuntime = iDELogicRuntimeContext.getDataEntityRuntime();
 			iDataEntityRuntime.getSystemRuntime().log(LogLevels.ERROR, LogCats.SCRIPT, String.format("执行实体逻辑脚本节点[%1$s][%2$s][%3$s]发生异常，%4$s", iDataEntityRuntime.getName(),
@@ -216,6 +229,24 @@ public class DELogicScriptNodeRuntime extends ModelRuntimeBase implements IDELog
 		finally {
 			ScriptCodeHolder.poll();
 		}
+	}
+
+	private static ErrorException getScriptBusinessError(ScriptException exception) {
+		Set<Throwable> seen = Collections.newSetFromMap(new IdentityHashMap<Throwable, Boolean>());
+		Throwable current = exception;
+		// Only known script/invocation wrappers may expose a typed business error.
+		for (int depth = 0; current != null && depth < 32 && seen.add(current); depth++) {
+			if (current instanceof ErrorException) {
+				return (ErrorException) current;
+			}
+			if (!(current instanceof ScriptException)
+					&& !(current instanceof InvocationTargetException)
+					&& !(current instanceof UndeclaredThrowableException)) {
+				return null;
+			}
+			current = current.getCause();
+		}
+		return null;
 	}
 
 

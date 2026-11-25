@@ -178,7 +178,8 @@
       "name" : "SaveResult",
       "type" : "VOID"
     },
-    "builtinAction" : true
+    "builtinAction": true,
+    "dataAccessAction": "CREATE"
   } ],
   "getAllPSDEDBConfigs" : [ {
     "dBType" : "MYSQL5",
@@ -1996,7 +1997,30 @@
     "logicName" : "更新",
     "name" : "UPDATE"
   } ],
-  "getAllPSDEUserRoles" : [ {
+  "getAllPSDEUserRoles": [
+    {
+      "dynaModelFilePath": "PSMODULES/AppPersonalization/PSDATAENTITIES/app_view_theme/PSDEUSERROLES/SystemRead.json",
+      "name": "System view preferences (read only)",
+      "getPSDEDataSet": {
+        "modelref": true,
+        "id": "cur_system"
+      },
+      "getPSDEUserRoleOPPrivs": [
+        {
+          "dataAccessAction": "READ",
+          "name": "READ",
+          "getPSDEOPPriv": {
+            "modelref": true,
+            "id": "READ"
+          }
+        }
+      ],
+      "roleTag": "SystemRead",
+      "userDRAction": "READ",
+      "defaultMode": true,
+      "systemReserved": true
+    },
+    {
     "dynaModelFilePath" : "PSMODULES/AppPersonalization/PSDATAENTITIES/app_view_theme/PSDEUSERROLES/ALL.json",
     "name" : "全部数据（读写）",
     "getPSDEUserRoleOPPrivs" : [ {

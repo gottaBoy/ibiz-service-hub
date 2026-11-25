@@ -17,5 +17,6 @@
     "name" : "SaveResult",
     "type" : "VOID"
   },
-  "builtinAction" : true
+  "builtinAction": true,
+  "dataAccessAction": "CREATE"
 }
